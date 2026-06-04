@@ -1,0 +1,196 @@
+openapi: 3.1.0
+
+# ──────────────────────────────────────────────────────────────
+# 이 파일은 "계약(Contract)"이며 이 레포의 단일 진실이다.
+# 실제 API 명세를 받으면 paths를 채운다. 아래는 규칙을 인코딩한 골격 +
+# 예시 경로다. 예시는 conventions/api.md 의 약속(에러 envelope, KST, 인증)을
+# 어떻게 표현하는지 보여주기 위한 것으로, 실제 명세로 교체/확장한다.
+# ──────────────────────────────────────────────────────────────
+
+info:
+  title: 내가그린기린기록 API
+  version: 0.1.0
+  description: |
+    AI 캐릭터 '실록이'와 짧게 대화하며 기록하고, Diary와 Persona를 기반으로
+    회고(Retrospective)를 생성하는 우테코 크루용 회고 서비스 API.
+
+    - 일자 경계는 06:00 KST. 시각은 ISO 8601 + 오프셋.
+    - 모든 에러는 #/components/responses/Error 형식을 따른다.
+
+servers:
+  - url: https://api.example.com/api/v1   # [확정 필요]
+    description: production
+  - url: http://localhost:8080/api/v1
+    description: local
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: auth
+  - name: persona
+  - name: chat        # 메모 / 실록이 역질문 / DailyChatSession
+  - name: diary
+  - name: retrospective
+
+paths:
+  # ── 예시 1: 인증된 사용자 조회 ──────────────────────────────
+  /users/me:
+    get:
+      tags: [auth]
+      summary: 내 정보 조회
+      operationId: getMe
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Error"
+
+  # ── 예시 2: 날짜로 Diary 조회 (KST 경계 주의) ───────────────
+  /diaries/{date}:
+    get:
+      tags: [diary]
+      summary: 특정 날짜의 Diary 조회
+      description: date 는 KST 캘린더 날짜. 일자 경계는 06:00 KST.
+      operationId: getDiaryByDate
+      parameters:
+        - name: date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date          # YYYY-MM-DD (KST)
+          example: "2026-06-04"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Diary"
+        "404":
+          $ref: "#/components/responses/Error"
+
+  # ── 예시 3: 회고 생성 (LLM, 동기/비동기 [확정 필요]) ────────
+  /retrospectives:
+    post:
+      tags: [retrospective]
+      summary: 기간 기반 회고 생성
+      operationId: createRetrospective
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [periodStart, periodEnd]
+              properties:
+                periodStart: { type: string, format: date }
+                periodEnd:   { type: string, format: date }
+                direction:   { type: string, description: 회고 방향 }
+      responses:
+        "201":
+          description: 생성됨
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Retrospective"
+        "400":
+          $ref: "#/components/responses/Error"
+
+  # TODO: 실제 명세 받으면 아래 영역 채우기
+  #   - POST /auth/github (GitHub OAuth)
+  #   - PATCH /users/me (닉네임)
+  #   - POST /personas (페르소나 생성)
+  #   - POST /memos, GET /daily-chat-sessions/{date}, POST .../messages (실록이 역질문)
+  #   - GET /diaries (목록, 페이지네이션)
+  #   - GET /retrospectives/{id}
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT   # [확정 필요]
+
+  # 공통 에러 응답 (conventions/api.md 4절) — 모든 에러는 이걸 재사용
+  responses:
+    Error:
+      description: 에러
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error]
+            properties:
+              error:
+                type: object
+                required: [code, message]
+                properties:
+                  code:    { type: string, example: DIARY_NOT_FOUND }
+                  message: { type: string, example: "해당 날짜의 다이어리가 없습니다." }
+                  details: { type: ["object", "null"] }
+
+  # 엔티티 스키마 — domain/data-model.md 와 일치시킨다.
+  # 필드 타입/제약은 실제 명세 확정 시 정밀화. [확정 필요] 표시 참고.
+  schemas:
+    User:
+      type: object
+      properties:
+        id:        { type: string }
+        githubId:  { type: string }
+        nickname:  { type: string }
+        createdAt: { type: string, format: date-time }
+
+    Persona:
+      type: object
+      properties:
+        id:                 { type: string }
+        userId:             { type: string }
+        tone:               { type: string }
+        thinkingStyle:      { type: string }
+        recurringInterests: { type: array, items: { type: string } }
+        values:             { type: array, items: { type: string } }
+
+    DailyChatSession:
+      type: object
+      properties:
+        id:     { type: string }
+        userId: { type: string }
+        date:   { type: string, format: date }     # KST
+        status: { type: string, enum: [OPEN, DONE] } # [확정 필요]
+        # messages: [확정 필요] 메시지 모델 정의 후 추가
+
+    Diary:
+      type: object
+      properties:
+        id:        { type: string }
+        userId:    { type: string }
+        date:      { type: string, format: date }   # KST, 하루 1개
+        content:   { type: string }
+        createdAt: { type: string, format: date-time }
+
+    Retrospective:
+      type: object
+      properties:
+        id:          { type: string }
+        userId:      { type: string }
+        periodStart: { type: string, format: date }
+        periodEnd:   { type: string, format: date }
+        direction:   { type: string }
+        content:     { type: string }              # Markdown
+        createdAt:   { type: string, format: date-time }
+
+    Pet:
+      type: object
+      description: P1 기능
+      properties:
+        id:     { type: string }
+        userId: { type: string }
+        exp:    { type: integer }
+        level:  { type: integer }
+        streak: { type: integer }

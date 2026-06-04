@@ -1,0 +1,37 @@
+{
+  "//": "BE/FE 레포의 .claude/settings.json 템플릿. 경로/명령은 각 레포 스택에 맞게 수정한다.",
+  "//hooks": "PreToolUse=실행 전(차단 가능), PostToolUse=실행 후(피드백), Stop=응답 종료 시.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./harness/hooks/format-and-lint.sh"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./harness/hooks/check-spec-drift.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./harness/hooks/guard-protected-branch.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
