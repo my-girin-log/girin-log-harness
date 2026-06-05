@@ -1,59 +1,13 @@
-# Gradle
-.gradle/
-build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-# Android build outputs
-*.apk
-*.aab
-*.ap_
-*.aar
-*.dex
-local.properties
-.cxx/
-captures/
-
-# Kotlin
-*.kotlin_module
-.kotlin/
-
-# IDE — Android Studio / IntelliJ
-.idea/
-*.iml
-*.iws
-*.ipr
-out/
-
-# IDE — VS Code / others
-.vscode/
-*.sw?
-
-# NDK
-obj/
-.externalNativeBuild/
-
-# Profiling / benchmark
-*.hprof
-*.trace
-*.perfetto-trace
-benchmark-results/
-
-# Signing
-*.jks
-*.keystore
-keystore.properties
-
-# Logs
+# 생성물
+/api/types/
 *.log
+/tmp/
 
-# OS
+# OS / 에디터
 .DS_Store
-Thumbs.db
-ehthumbs.db
-Desktop.ini
+*.swp
+.idea/
+.vscode/
 
-# Temp
-*.tmp
-*.bak
+# Claude Code 개인 설정 (공유 설정은 .claude/settings.json만 커밋)
+.claude/settings.local.json

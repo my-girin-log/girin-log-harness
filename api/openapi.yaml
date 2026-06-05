@@ -102,12 +102,15 @@ paths:
         "400":
           $ref: "#/components/responses/Error"
 
-  # TODO: 실제 명세 받으면 아래 영역 채우기
+  # TODO: 실제 명세 받으면 아래 영역 채우기 (리뷰 반영 후 갱신)
   #   - POST /auth/github (GitHub OAuth)
   #   - PATCH /users/me (닉네임)
-  #   - POST /personas (페르소나 생성)
-  #   - POST /memos, GET /daily-chat-sessions/{date}, POST .../messages (실록이 역질문)
-  #   - GET /diaries (목록, 페이지네이션)
+  #   - POST /personas  (온보딩 ~10문항 설문 기반 생성, 글 입력은 fallback)
+  #   - POST /memos  (하루 여러 개)
+  #   - POST /daily-chat-sessions  (메모로 세션 시작)
+  #   - POST /daily-chat-sessions/{id}/messages  (역질문/답변, followUpCount≤10)
+  #   - POST /daily-chat-sessions/{id}/end  ('끝내기' → 마무리 멘트 → status=ENDED)
+  #   - GET /diaries  (목록, 페이지네이션) / GET /diaries/{date}
   #   - GET /retrospectives/{id}
 
 components:
@@ -148,6 +151,7 @@ components:
 
     Persona:
       type: object
+      description: 온보딩 ~10문항 설문 기반 생성(글 입력은 fallback).
       properties:
         id:                 { type: string }
         userId:             { type: string }
@@ -155,14 +159,33 @@ components:
         thinkingStyle:      { type: string }
         recurringInterests: { type: array, items: { type: string } }
         values:             { type: array, items: { type: string } }
+        surveyAnswers:      { type: array, items: { type: string } } # ~10문항
+        markdown:           { type: string }   # persona.md 표현
+
+    Memo:
+      type: object
+      description: 하루 여러 개 가능. 대화 세션의 시작점.
+      properties:
+        id:        { type: string }
+        userId:    { type: string }
+        date:      { type: string, format: date }   # KST
+        content:   { type: string }
+        createdAt: { type: string, format: date-time }
 
     DailyChatSession:
       type: object
+      description: 메모로 시작. 하루 여러 세션 가능. 역질문 최대 10회. 끝내기로 종료.
       properties:
-        id:     { type: string }
-        userId: { type: string }
-        date:   { type: string, format: date }     # KST
-        status: { type: string, enum: [OPEN, DONE] } # [확정 필요]
+        id:               { type: string }
+        userId:           { type: string }
+        date:             { type: string, format: date }     # KST
+        memoId:           { type: string }
+        followUpCount:    { type: integer, minimum: 0, maximum: 10 }
+        maxFollowUpCount: { type: integer, default: 10 }
+        status:           { type: string, enum: [OPEN, ENDED] }
+        endedReason:
+          type: ["string", "null"]
+          enum: [USER_ENDED, MAX_FOLLOWUP, AI_DECIDED, null]
         # messages: [확정 필요] 메시지 모델 정의 후 추가
 
     Diary:

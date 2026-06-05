@@ -1,0 +1,16 @@
+{
+  "//": "girin-codex 자체의 hook. 이 레포에선 openapi 유효성만 가볍게 강제한다.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ./harness/hooks/check-spec-drift.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
