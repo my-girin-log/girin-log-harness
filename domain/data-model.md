@@ -132,10 +132,24 @@ MVP에서는 조회만 가능하며 수정/삭제하지 않는다.
 | `createdAt` | 생성 시각 | |
 | `endedAt` | 종료 시각 | |
 
+DailyChatSession 예시:
+
+```text
+DailyChatSession
+1. SILOK: ~~을 할 때는 무슨 감정이었어?
+2. USER: ~~이었어.
+3. SILOK: 그럼 ~~ 이런 부분에서는 ~~이랬던 거야?
+4. USER: 아니야. 나는 이렇게 느꼈어.
+```
+
 ## ChatMessage
 
-DailyChatSession 안에 순서대로 저장되는 실록이 질문과 사용자 답변의 raw data.
-엔티티명은 `Chat`이 아니라 `ChatMessage`로 통일한다.
+DailyChatSession 안에서 오간 실록이 질문, 사용자 답변, 마무리 멘트를 순서대로 모두
+저장하는 메시지 단위 데이터다. 전체 대화 내용은 하나의 DailyChatSession과 그에 속한
+여러 ChatMessage를 순서대로 읽어 복원한다.
+
+엔티티명은 `Chat`이 아니라 `ChatMessage`로 통일한다. `ChatMessage`는 대화 일부만
+저장하는 요약 데이터가 아니라, Diary 생성에 사용할 전체 대화 원문 로그다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
@@ -146,6 +160,15 @@ DailyChatSession 안에 순서대로 저장되는 실록이 질문과 사용자 
 | `content` | 메시지 내용 | |
 | `sequence` | 세션 내 순서 | |
 | `createdAt` | 생성 시각 | |
+
+ChatMessage 단일 레코드 예시:
+
+```text
+sender: SILOK
+messageType: FOLLOW_UP_QUESTION
+content: ~~을 할 때는 무슨 감정이었어?
+sequence: 1
+```
 
 ## Diary
 

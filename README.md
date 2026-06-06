@@ -168,7 +168,7 @@ erDiagram
     User ||--o{ Memo : "하루 여러 개"
     Memo ||--o{ MemoSummary : "요약 생성"
     MemoSummary }o--o{ DailyChatSession : "선택해 세션 시작"
-    DailyChatSession ||--o{ ChatMessage : "질문-답변"
+    DailyChatSession ||--o{ ChatMessage : "전체 대화 원문"
     User ||--o{ Diary : "보유"
     User ||--o{ Retrospective : "기간 선택"
     User ||--o{ EventLog : "행동 이벤트"
