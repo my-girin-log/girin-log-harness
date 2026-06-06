@@ -1,8 +1,7 @@
 # 데이터 모델
 
-기획안 9절 + 기획 리뷰 코멘트(2026-06) 반영 초안.
-**`[확정 필요]`는 실제 API 명세를 받은 뒤 확정한다.**
-필드명은 `conventions/glossary.md`의 표준 영문명을 따른다.
+MVP 기획안(2026-06-06)과 결정사항을 반영한 도메인 모델 초안이다.
+**`[확정 필요]`는 실제 API 명세 또는 팀 합의가 생기기 전까지 임의로 채우지 않는다.**
 
 > 이 문서는 "엔티티가 무엇이고 무엇을 담는가"를 합의하는 곳이다.
 > 정확한 타입/제약/관계는 `api/openapi.yaml`의 `components/schemas`가 최종 진실이다.
@@ -11,22 +10,50 @@
 
 ## User
 
-로그인 사용자. GitHub OAuth로 진입.
+GitHub OAuth 기반 로그인 사용자.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
 | `id` | 내부 식별자 | |
 | `githubId` | GitHub 식별자 | OAuth |
-| `nickname` | 닉네임 | 첫 진입 시 설정 |
+| `githubUsername` | GitHub username | |
+| `profileImageUrl` | GitHub 프로필 이미지 URL | |
+| `nickname` | 서비스 닉네임 | |
+| `onboardingCompleted` | 온보딩 완료 여부 | |
 | `createdAt` | 가입 시각 | |
+| `updatedAt` | 수정 시각 | |
+
+## OnboardingSurvey
+
+말투, 정리 습관, 회고 성향을 수집하는 약 10개 문항의 설문 응답.
+
+| 필드 | 설명 | 비고 |
+| --- | --- | --- |
+| `id` | 식별자 | |
+| `userId` | 소유자 | |
+| `answers` | 설문 응답 원문 | JSON 저장 검토 |
+| `submittedAt` | 제출 시각 | |
+
+## PersonaSource
+
+Persona 생성을 위한 원천 입력. 블로그 링크, 기존 글 원문, 설문 응답 등을 보관한다.
+
+| 필드 | 설명 | 비고 |
+| --- | --- | --- |
+| `id` | 식별자 | |
+| `userId` | 소유자 | |
+| `sourceType` | 입력 종류 | `BLOG_URL` / `TEXT` / `SURVEY` |
+| `content` | 원천 내용 | URL 또는 원문 |
+| `analysisStatus` | 분석 상태 | `[확정 필요]` |
+| `createdAt` | 생성 시각 | |
 
 ## Persona
 
-사용자의 말투, 사고 흐름, 반복 관심사, 중요하게 여기는 기준.
-회고 생성 시 "사용자다움"의 근거.
+사용자의 말투, 사고 흐름, 관심사, 정리 습관, 회고 기준을 요약한 정보.
+Retrospective 생성 시 "사용자다움"의 근거가 된다.
 
-**[리뷰 반영] 생성 방식: 온보딩 시 ~10문항 설문으로 어투·성격 스타일 데이터를 확보한다.**
-기존 글 링크/원문 입력은 보조(fallback). 설문이 1차, 글 입력이 2차.
+블로그 링크 분석 결과, 기존 글 원문, 온보딩 설문 응답을 함께 사용하되 일부 입력만 있어도
+Persona를 생성할 수 있어야 한다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
@@ -35,127 +62,170 @@
 | `tone` | 말투 특징 | |
 | `thinkingStyle` | 사고 흐름 | |
 | `recurringInterests` | 반복 관심사 | |
-| `values` | 중요하게 여기는 기준 | |
-| `surveyAnswers` | 온보딩 설문 응답 | ~10문항 |
-| `sourceText` | (fallback) 입력 원문/링크 | |
-| `markdown` | persona.md 표현(아래 참조) | diary 생성 시 갱신 |
+| `organizingHabit` | 글 정리 습관 | |
+| `retrospectionCriteria` | 회고 기준 | |
+| `preferredStructure` | 선호 글 구조 | |
+| `summary` | 회고 생성용 요약 Persona | |
+| `createdAt` | 생성 시각 | |
+| `updatedAt` | 수정 시각 | |
 
 ## Memo
 
-**[리뷰 반영]** 사용자가 하루 중 원하는 시점에 남기는 짧은 기록. **하루에 여러 번 남길 수 있다.**
-메모는 대화 세션의 시작점이 된다("대화하기"/메모 추가 → 세션 시작).
+사용자가 하루 동안 자유롭게 기록하는 작업 메모장 단위. 하루에 여러 개 생성될 수 있다.
+
+### 상태
+
+| 상태 | 설명 |
+| --- | --- |
+| `DRAFT` | 작성 중 |
+| `SUMMARIZED` | MemoSummary 생성 완료 |
+| `ARCHIVED` | 06:00 KST 이후 일일 작업 공간에서 제외 |
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
 | `id` | 식별자 | |
 | `userId` | 소유자 | |
-| `date` | 작성 날짜(KST) | 일자 경계 06:00 KST |
-| `content` | 짧은 기록 본문 | |
-| `createdAt` | 작성 시각 | |
+| `date` | 서비스 기준 날짜(KST) | 일자 경계 06:00 KST |
+| `content` | 기록 본문 | 긴 텍스트 |
+| `status` | Memo 상태 | `DRAFT` / `SUMMARIZED` / `ARCHIVED` |
+| `createdAt` | 생성 시각 | |
+| `updatedAt` | 수정 시각 | |
 
-> 리마인드 알림(정해둔 시간에 "대화하기" 유도)은 옵션으로 검토. 단 "복잡한 푸시 알림"은 MVP 제외(기획안 12절)와 충돌하지 않게 가벼운 수준으로. `[확정 필요]`
+## MemoSummary
+
+Memo 전체 내용을 AI가 읽고 카테고리별로 재구성한 요약본.
+MVP에서는 조회만 가능하며 수정/삭제하지 않는다.
+
+| 필드 | 설명 | 비고 |
+| --- | --- | --- |
+| `id` | 식별자 | |
+| `userId` | 소유자 | |
+| `memoId` | 요약 대상 Memo | |
+| `date` | 서비스 기준 날짜(KST) | |
+| `categoryName` | 카테고리명 | |
+| `summary` | 요약 내용 | |
+| `createdAt` | 생성 시각 | |
 
 ## DailyChatSession
 
-메모 기반으로 시작되는 **대화 세션**. 실록이의 역질문과 사용자 답변이 쌓인다.
+하나 이상의 MemoSummary를 기반으로 시작되는 실록이 대화 세션.
 
-**[리뷰 반영] 세션 라이프사이클**
-- **하루에 여러 세션**이 생길 수 있다(메모가 추가되면 새 세션 시작 가능).
-- **역질문은 최대 10회로 제한**한다(프롬프트로 강제).
-- 종료: 사용자가 **'끝내기' 버튼**을 누르면 실록이가 마무리 멘트를 하고 세션을 종료(`ENDED`)한다. AI 판단으로 대화를 더 이어갈 수도 있다.
-- 하루에 세션이 여러 개여도 **Diary는 하루에 1개만** 생성된다(아래 Diary 참조).
+### 라이프사이클
+
+- 하루에 여러 세션이 생길 수 있다.
+- 세션은 Memo가 아니라 사용자가 선택한 하나 이상의 MemoSummary로 시작한다.
+- 실록이의 역질문은 최대 10회로 제한한다.
+- 사용자는 언제든 끝내기 버튼으로 종료할 수 있다.
+- 종료 시 짧은 마무리 멘트를 제공한다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
 | `id` | 식별자 | |
 | `userId` | 소유자 | |
-| `date` | 대상 날짜(KST) | |
-| `memoId` | 시작점이 된 메모 | |
-| `messages` | 메모/역질문/답변 시퀀스 | `[확정 필요]` 메시지 모델 |
+| `date` | 서비스 기준 날짜(KST) | |
+| `selectedMemoSummaryIds` | 선택된 MemoSummary 목록 | 관계 테이블 검토 |
 | `followUpCount` | 누적 역질문 횟수 | 0~10 |
 | `maxFollowUpCount` | 역질문 상한 | 기본 10 |
 | `status` | 세션 상태 | `OPEN` / `ENDED` |
 | `endedReason` | 종료 사유 | `USER_ENDED` / `MAX_FOLLOWUP` / `AI_DECIDED` |
+| `closingMessage` | 종료 시 마무리 멘트 | |
+| `createdAt` | 생성 시각 | |
+| `endedAt` | 종료 시각 | |
+
+## ChatMessage
+
+DailyChatSession 안에 순서대로 저장되는 실록이 질문과 사용자 답변의 raw data.
+엔티티명은 `Chat`이 아니라 `ChatMessage`로 통일한다.
+
+| 필드 | 설명 | 비고 |
+| --- | --- | --- |
+| `id` | 식별자 | |
+| `dailyChatSessionId` | 소속 세션 | |
+| `sender` | 발화자 | `SILOK` / `USER` |
+| `messageType` | 메시지 종류 | `FOLLOW_UP_QUESTION` / `USER_ANSWER` / `CLOSING` |
+| `content` | 메시지 내용 | |
+| `sequence` | 세션 내 순서 | |
+| `createdAt` | 생성 시각 | |
 
 ## Diary
 
-그날의 **모든 세션을 합쳐** 정리한 날짜별 기록. **하루 1개.** 조회의 기본 단위.
+하루의 Memo, MemoSummary, ChatMessage를 종합한 일일 기록. 날짜별 하나만 생성된다.
 
-**[리뷰 반영] 06:00 KST 동작**: 자동 정리(Diary 생성/갱신) + **채팅 context 초기화**.
-즉 06:00 KST에 전날 세션들을 Diary로 정리하고, 대화 컨텍스트를 리셋한다.
-생성 시 기존 마크다운 문서(persona.md, log.md)도 갱신한다.
+### 06:00 KST 동작
+
+- 매일 06:00 KST에 전날 데이터를 기반으로 자동 생성한다.
+- 수동 생성은 MVP 범위가 아니다.
+- 기존 Memo, MemoSummary, ChatMessage는 삭제하지 않고 보관한다.
+- 06:00 KST 이후 작업 공간에서는 이전 Memo를 `ARCHIVED`로 취급한다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
 | `id` | 식별자 | |
 | `userId` | 소유자 | |
-| `date` | 날짜(KST) | **하루 1개(unique)** |
-| `content` | 정리된 본문(Markdown) | diary.md 표현 |
-| `createdAt` | 생성 시각 | ~06:00 KST |
-| `editable` | 수정 가능 여부 | 수정/삭제는 P1 |
+| `date` | 서비스 기준 날짜(KST) | 하루 1개 unique |
+| `mainEvents` | 하루 주요 사건 | |
+| `emotionContext` | 감정과 맥락 | |
+| `concerns` | 고민한 지점 | |
+| `newCriteria` | 새로 생긴 기준 | |
+| `nextActions` | 다음에 다르게 해보고 싶은 점 | |
+| `retrospectiveSummary` | 회고 생성용 요약 | |
+| `content` | 정리된 Markdown 본문 | |
+| `createdAt` | 생성 시각 | |
 
 ## Retrospective
 
-기간을 선택해 Diary + Persona 기반으로 생성한 **완성형 회고 글**.
+기간 내 Diary와 Persona를 기반으로 생성한 완성형 회고 글.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
 | `id` | 식별자 | |
 | `userId` | 소유자 | |
-| `periodStart` / `periodEnd` | 대상 기간 | |
-| `direction` | 회고 방향 | 사용자가 선택 |
+| `periodStart` | 시작 날짜 | |
+| `periodEnd` | 종료 날짜 | |
+| `title` | 제목 | |
 | `content` | 생성된 Markdown | 복사/다운로드 대상 |
 | `createdAt` | 생성 시각 | |
 
-## Pet (P1)
+## EventLog
 
-실록이 성장, EXP, streak 등 보조 리텐션 정보. MVP P1.
+MVP 검증 지표 수집을 위한 얇은 append-only 이벤트 로그.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
 | `id` | 식별자 | |
-| `userId` | 소유자 | |
-| `exp` | 경험치 | |
-| `level` | 레벨 | |
-| `streak` | 연속 기록일 | |
+| `userId` | 사용자 | 비로그인 이벤트 필요 여부 `[확정 필요]` |
+| `eventType` | 이벤트 종류 | 예: `MEMO_CREATED` |
+| `occurredAt` | 발생 시각 | |
+| `metadataJson` | 부가 정보 | PostgreSQL `jsonb` 검토 |
 
----
+초기 이벤트 후보:
 
-## 마크다운 문서 모델 [리뷰 반영, `[확정 필요]`]
-
-리뷰에서 데이터가 마크다운 문서 형태로 표현/갱신된다는 논의가 있었다.
-정확한 파일 구성("diary.md(log.md)와 persona.md 인가요?")은 스레드에서 미확정이라
-**아래는 합의 초안**이며, 명세 확정 시 엔티티 필드(`markdown`/`content`)와 일대일로 맞춘다.
-
-- **persona.md** — 사용자 페르소나. diary 생성 시 새 정보가 반영되어 갱신된다.
-  ```md
-  - 사고 과정을 설명하는 글을 선호함
-  - "것 같다" 표현을 자주 사용
-  - 감정보다는 원인을 설명하는 편
-  - 회고 시 성장 포인트를 자주 찾음
-  ```
-- **log.md** — 날짜별 사실 로그(무엇을 했는지). 매일 누적.
-  ```md
-  2026-06-01
-  - 페어 프로그래밍 진행
-  - 리뷰 3개 작성
-  - 점심에 크루와 대화
-  - 알고리즘 문제 풀이
-  ```
-- **diary.md** — 정리된 다이어리 본문(감정/맥락 포함). Diary.content와 대응.
-
-> 핵심: **Diary 생성(06:00 KST) 시 기존 persona.md / log.md를 업데이트**한다.
-
----
+- `USER_SIGNED_IN`
+- `ONBOARDING_COMPLETED`
+- `PERSONA_CREATED`
+- `MEMO_CREATED`
+- `MEMO_SUMMARIZED`
+- `CHAT_SESSION_STARTED`
+- `CHAT_SESSION_ENDED`
+- `DIARY_CREATED`
+- `RETROSPECTIVE_CREATED`
 
 ## 관계 요약
 
+```text
+User 1 ── N OnboardingSurvey
+User 1 ── N PersonaSource
+User 1 ── 1 Persona
+User 1 ── N Memo
+Memo 1 ── N MemoSummary
+MemoSummary N ── N DailyChatSession
+DailyChatSession 1 ── N ChatMessage
+User 1 ── N Diary       (date 기준 하루 1개)
+User 1 ── N Retrospective
+User 1 ── N EventLog
 ```
-User 1 ── 1 Persona              (온보딩 10문항 설문 기반, persona.md 갱신)
-User 1 ── N Memo                 (하루 여러 개)
-Memo 1 ── N DailyChatSession     (메모로 세션 시작, 하루 여러 세션, 역질문≤10, 끝내기로 종료)
-       └─ (06:00 KST 정리+context 초기화) ──> Diary (하루 1개)
-User 1 ── N Diary
-User 1 ── N Retrospective         (기간 선택, Diary들 + Persona 참조)
-User 1 ── 1 Pet (P1)
-```
+
+## MVP 제외 도메인
+
+- `Pet`: 실록이 성장, EXP, streak 등은 MVP 제외.
+- Export 서버 모델: Markdown 복사/다운로드는 FE 기능으로 처리한다.

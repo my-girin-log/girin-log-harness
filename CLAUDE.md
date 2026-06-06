@@ -1,53 +1,17 @@
 # CLAUDE.md — girin-codex
 
-이 파일은 이 레포에서 작업하는 코딩 에이전트를 위한 컨텍스트다.
-**여기 적힌 건 "지향"이고, 반드시 지켜야 하는 건 `harness/`의 hook이 강제한다.**
-둘 다 읽고 따른다.
+이 레포의 공통 AI 작업 지침은 `AGENTS.md`를 따른다.
 
-## 이 레포의 정체
+Claude Code는 작업 전 아래 순서로 문서를 확인한다.
 
-- 애플리케이션 코드가 아니다. **계약(`api/openapi.yaml`) + 규칙(`conventions/`) + 하네스(`harness/`)** 의 모음이다.
-- 여기서의 작업은 거의 항상 "문서/명세를 정확하고 일관되게 다듬는 것"이다. 기능 구현이 아니다.
+1. `AGENTS.md`
+2. `requirements/product.md`
+3. `requirements/scenarios.md`
+4. `requirements/decisions.md`
+5. `domain/data-model.md`
+6. `api/openapi.yaml`
+7. `conventions/glossary.md`
+8. `conventions/api.md`
 
-## 절대 규칙
-
-1. **명세가 진실이다.** `api/openapi.yaml`을 임의로 추측해서 바꾸지 않는다. 변경은 근거(기획안·합의)가 있을 때만, 변경 후엔 영향 범위를 PR 설명에 남긴다.
-2. **용어는 `conventions/glossary.md`를 따른다.** 같은 개념을 다른 단어로 부르지 않는다. 예: 회고는 `Retrospective`이지 `Retro`/`Review`가 아니다.
-3. **`[확정 필요]` 표시를 임의로 채우지 않는다.** 팀 합의가 필요한 자리다. 사용자에게 물어보거나 그대로 둔다.
-4. **커밋 메시지는 한국어로,** `conventions/git.md` 규칙을 따른다.
-5. OpenAPI를 수정하면 유효성(스키마)이 깨지지 않았는지 확인한다. hook이 한 번 더 잡는다.
-
-## 도메인 한 줄 요약
-
-AI 캐릭터 **실록이**와 짧게 대화하며 하루의 사건·감정·고민을 기록하고,
-이를 **Diary**(날짜별 정리)와 **Persona**(말투/사고)로 묶어
-**Retrospective**(완성형 회고 글)를 생성하는 우테코 크루용 회고 서비스.
-
-핵심 흐름:
-`짧은 메모 → 실록이 역질문 → 맥락 보강 → 06:00 KST Diary 자동 정리 → 기간 선택 → 회고 생성 → 복사/다운로드`
-
-핵심 규칙(기획 리뷰 반영):
-- 메모는 **하루 여러 개**. 메모가 대화 세션을 시작시킨다.
-- 대화 세션은 **하루 여러 개** 가능. **역질문 최대 10회**(프롬프트로 강제). '끝내기' 버튼/AI 판단으로 종료.
-- 세션이 여러 개여도 **Diary는 하루 1개**.
-- **06:00 KST에 자동 정리 + 채팅 context 초기화** + persona.md/log.md 갱신.
-- Persona는 **온보딩 ~10문항 설문**으로 생성(기존 글 입력은 fallback).
-
-자세한 엔티티는 `domain/data-model.md`, 톤 원칙은 기획안 10절을 본다.
-
-## 자주 하는 실수 (하지 말 것)
-
-- 명세에 없는 필드/엔드포인트를 "있을 법해서" 추가하기 → 금지. 명세에 먼저 합의·반영.
-- 영어/한국어 용어 혼용(`diary`와 `journal`을 같이 쓰는 등) → glossary 단일화.
-- 시간을 UTC로 가정 → 이 서비스의 일자 경계는 **06:00 KST**다. `conventions/api.md` 참고.
-- 역질문을 무한정 생성 → **최대 10회**. 상한은 정책 상수/프롬프트로.
-- 하루에 Diary를 여러 개 만들기 → **하루 1개**(여러 세션을 합쳐 정리).
-- Persona를 글 입력으로만 만들기 → 1차는 **온보딩 설문(~10문항)**, 글 입력은 fallback.
-- 실록이를 "상담사/치료자"처럼 묘사 → 옆자리 크루처럼 담백하게(기획안 10절).
-
-## 빌드/검증 명령
-
-```bash
-# OpenAPI 유효성 검사 (도구는 conventions/api.md 참고)
-bash harness/hooks/check-spec-drift.sh
-```
+충돌 시 `api/openapi.yaml`이 API 계약의 최종 진실이다. 기능 요구사항은
+`requirements/product.md`를 기준으로 보되, `[확정 필요]`는 임의로 채우지 않는다.

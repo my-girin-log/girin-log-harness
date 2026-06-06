@@ -6,10 +6,11 @@
 
 | 영역 | 스택 | 비고 |
 | --- | --- | --- |
-| Backend | `[확정 필요]` (예: Spring Boot + Kotlin/Java) | |
-| Frontend | `[확정 필요]` (예: React + TypeScript + Vite) | |
+| Backend | Spring Boot + Java 21 + Gradle | DB는 PostgreSQL 우선 |
+| Frontend | Next.js + TypeScript + Emotion + TanStack Query | |
 | 타입 생성 | OpenAPI → FE 타입 자동 생성 | `harness/SETUP.md` |
 | 패키지/모듈 매니저 | `[확정 필요]` | |
+| 테스트 DB | Testcontainers PostgreSQL 우선 | H2는 대안 |
 
 ## 1. 백엔드 2명 분담 — 레이어가 아니라 도메인으로 자른다
 
@@ -21,7 +22,7 @@
 | 담당 | 도메인 |
 | --- | --- |
 | BE-A | 인증(User/GitHub OAuth), Persona |
-| BE-B | 기록(Memo/DailyChatSession), Diary, Retrospective |
+| BE-B | 기록(Memo/MemoSummary/DailyChatSession/ChatMessage), Diary, Retrospective |
 | 공유 | 실록이 LLM 연동 모듈, 공통 에러/응답 |
 
 경계가 닿는 부분(실록이 호출, 공통 에러 포맷)은 **먼저 인터페이스만 합의**하고 각자 구현한다.
@@ -32,8 +33,11 @@
 src/
   auth/        # 컨트롤러+서비스+리포지토리 한 묶음
   persona/
+  memo/
+  conversation/
   diary/
   retrospective/
+  event/
   silok/       # LLM 연동 공유 모듈
   common/      # 에러 envelope, 시각(KST) 유틸 등
 ```
@@ -44,6 +48,7 @@ src/
 - 에러: `conventions/api.md`의 envelope를 공통 모듈에서 한 번만 정의하고 재사용.
 - 시각: 일자 계산은 공통 KST 유틸을 통해서만. 곳곳에서 `now()`를 직접 타임존 없이 쓰지 않는다.
 - 매직 넘버 금지: `06:00` 같은 정책 값은 상수/설정으로.
+- AI는 사용자 승인 없이 DB 스키마 변경, 인증/인가 정책 변경, OpenAPI 변경, 도메인 정책 변경, 운영 설정 변경을 하지 않는다.
 
 ## 4. 테스트
 

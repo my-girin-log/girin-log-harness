@@ -8,16 +8,21 @@
 | 실록이 (AI 캐릭터) | `silok` | 코드/주석 | `bot`, `ai`, `assistant`(혼용 금지) |
 | 크루 (사용자) | `User` | 엔티티 | `Member`, `Crew`(엔티티명으론 X) |
 | 페르소나 | `Persona` | 엔티티/필드 | `Profile`, `Style` |
-| 메모 (대화 전 짧은 기록) | `Memo` | 엔티티/필드 | `Note`, `Record`(혼용 금지) |
+| 페르소나 원천 입력 | `PersonaSource` | 엔티티 | `PersonaInput`, `Source`(단독) |
+| 온보딩 설문 | `OnboardingSurvey` | 엔티티/필드 | `PersonaSurvey`, `quiz`, `questionnaire` |
+| 메모 (작업 메모장) | `Memo` | 엔티티/필드 | `Note`, `Record`(혼용 금지) |
+| 메모 요약 | `MemoSummary` | 엔티티/필드 | `Summary`, `MemoCategory` |
+| 메모 상태 | `MemoStatus` | enum | `DRAFT`/`SUMMARIZED`/`ARCHIVED` 외 임의 추가 금지 |
 | 역질문 (실록이의 되묻기) | `followUpQuestion` | 필드 | `question`(단독은 모호) |
 | 역질문 횟수/상한 | `followUpCount` / `maxFollowUpCount` | 필드 | — (상한 기본 10) |
 | 세션 끝내기 | `endSession` / `status=ENDED` | 동작/필드 | `close`, `finish`(혼용 금지) |
 | 종료 사유 | `endedReason` | 필드 | enum: `USER_ENDED`/`MAX_FOLLOWUP`/`AI_DECIDED` |
-| 온보딩 페르소나 설문 | `PersonaSurvey` | 엔티티/필드 | `quiz`, `questionnaire`(혼용 금지) |
-| 하루 원천 대화 로그 | `DailyChatSession` | 엔티티 | `ChatLog`, `Session`(단독) |
+| 일일 대화 세션 | `DailyChatSession` | 엔티티 | `ChatLog`, `Session`(단독) |
+| 대화 메시지 | `ChatMessage` | 엔티티 | `Chat`, `Message`(단독) |
 | 다이어리 (날짜별 정리본) | `Diary` | 엔티티 | `Journal`, `DailyNote` |
 | 회고 (완성형 글) | `Retrospective` | 엔티티 | `Retro`, `Review`, `Reflection` |
-| 펫 (성장/EXP/streak) | `Pet` | 엔티티 | `Character`, `Mascot` |
+| 이벤트 로그 | `EventLog` | 엔티티 | `AnalyticsLog`, `TrackingLog` |
+| 펫 (성장/EXP/streak) | `Pet` | MVP 제외 도메인 | `Character`, `Mascot` |
 | 우테코 | `wtc` 또는 풀어서 표기 | 주석/문서 | 무분별한 약어 |
 
 ## 표기 규칙
@@ -30,6 +35,8 @@
 ## 도메인 약속
 
 - "회고를 만든다" = `Retrospective`를 **생성(generate)** 한다. "Diary를 만든다"와 구분.
-- "정리한다" = DailyChatSession → Diary 변환(06:00 KST 자동). 동사는 `summarize`/`compile` 중 `[확정 필요]`.
+- "메모를 요약한다" = `Memo` → `MemoSummary` 생성.
+- "대화를 시작한다" = 하나 이상의 `MemoSummary`를 선택해 `DailyChatSession`을 생성.
+- "정리한다" = MemoSummary, ChatMessage → Diary 변환(06:00 KST 자동).
 - 일자 경계는 항상 **06:00 KST**. "오늘"의 정의가 자정이 아님에 주의(`conventions/api.md`).
-- 마크다운 표현 파일명(리뷰 반영, `[확정 필요]`): 페르소나=`persona.md`, 사실 로그=`log.md`, 다이어리=`diary.md`. 임의 변형 금지.
+- Markdown 복사/다운로드는 별도 서버 API가 아니라 FE 기능이다.

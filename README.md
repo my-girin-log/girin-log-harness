@@ -10,7 +10,7 @@
 
 > [!IMPORTANT]
 > **이 레포엔 애플리케이션 코드가 없습니다.** 여기 있는 건 "모두가 따라야 하는 것"뿐입니다 —
-> 계약(`api/openapi.yaml`), 규칙(`conventions/`), 강제 장치(`harness/`).
+> 요구사항(`requirements/`), 계약(`api/openapi.yaml`), 규칙(`conventions/`), 강제 장치(`harness/`).
 > 기능은 backend/frontend 레포에서 구현하고, 그 레포들이 **이 레포를 참조**합니다.
 
 ---
@@ -21,6 +21,7 @@
 flowchart TB
     subgraph CODEX["girin-codex — 단일 진실(SSOT)"]
         direction LR
+        REQ["requirements/<br/>요구사항"]
         SPEC["api/openapi.yaml<br/>계약"]
         CONV["conventions/<br/>규칙"]
         HARN["harness/<br/>강제 hook"]
@@ -52,9 +53,14 @@ flowchart TB
 ```text
 girin-codex/
 ├── README.md            ← 지금 이 문서 (이거 하나로 충분)
-├── CLAUDE.md            ← 에이전트가 매번 읽는 컨텍스트 (지향)
+├── AGENTS.md            ← Codex/Claude 공통 에이전트 지침
+├── CLAUDE.md            ← Claude Code용 얇은 진입점
 ├── .claude/
 │   └── settings.json    ← 이 레포용 hook (openapi 유효성 검사)
+├── requirements/        ← 기능 요구사항 · 시나리오 · 결정 이력
+│   ├── product.md
+│   ├── scenarios.md
+│   └── decisions.md
 ├── api/
 │   ├── openapi.yaml     ← ★ 계약(SSOT). 모든 엔드포인트의 진실
 │   └── README.md
@@ -73,11 +79,13 @@ girin-codex/
 
 | 경로 | 역할 | 누가 보나 |
 | --- | --- | --- |
+| `requirements/` | 기능 요구사항, 시나리오, 결정 이력 | 기획 · BE · FE · 에이전트 |
 | `api/openapi.yaml` | **계약.** 모든 엔드포인트의 단일 진실 | BE · FE · 에이전트 |
 | `conventions/` | 코딩·API·Git·용어 규칙 | 사람 · 에이전트 |
 | `domain/data-model.md` | 엔티티 정의 | 사람 · 에이전트 |
 | `harness/` | BE/FE에 복사/연결하는 강제 hook | 셋업 담당 |
-| `CLAUDE.md` | 이 레포 작업 에이전트의 컨텍스트 | 에이전트 |
+| `AGENTS.md` | 이 레포 작업 에이전트의 공통 컨텍스트 | 에이전트 |
+| `CLAUDE.md` | Claude Code용 진입점 | 에이전트 |
 
 ---
 
@@ -107,9 +115,9 @@ sequenceDiagram
 
 ---
 
-## 🛡 2층 방어: CLAUDE.md (지향) ↔ hook (강제)
+## 🛡 2층 방어: AGENTS.md (지향) ↔ hook (강제)
 
-`CLAUDE.md`/`conventions/`는 에이전트가 **겨냥**할 방향이고(안 지킬 수 있음),
+`AGENTS.md`/`conventions/`는 에이전트가 **겨냥**할 방향이고(안 지킬 수 있음),
 `harness/`의 hook은 **매번 실행되는 강제**다. 둘은 대체재가 아니라 레이어다.
 
 ```mermaid
@@ -123,7 +131,7 @@ flowchart TD
 
 | 레이어 | 무엇 | 강제력 | 다루는 것 |
 | --- | --- | --- | --- |
-| **CLAUDE.md / conventions** | 지향·의도·용어 | 약함 (제안) | "왜 이렇게 하는지", 좋은 추상화, 도메인 맥락 |
+| **AGENTS.md / conventions** | 지향·의도·용어 | 약함 (제안) | "왜 이렇게 하는지", 좋은 추상화, 도메인 맥락 |
 | **harness/hooks** | 셸 명령으로 통과/실패 판정 | 강함 (매번 실행) | 포맷·린트·타입체크·**명세 준수**·테스트·브랜치 보호 |
 
 > 규칙을 프롬프트에만 두면 "안 따를" 수 있다. hook으로 인코딩하면 제안이 **매번 실행되는 코드**가 된다.
@@ -158,12 +166,16 @@ flowchart LR
 erDiagram
     User ||--|| Persona : "온보딩 설문으로 생성"
     User ||--o{ Memo : "하루 여러 개"
-    Memo ||--o{ DailyChatSession : "세션 시작점"
-    DailyChatSession }o--|| Diary : "합쳐서 정리"
+    Memo ||--o{ MemoSummary : "요약 생성"
+    MemoSummary }o--o{ DailyChatSession : "선택해 세션 시작"
+    DailyChatSession ||--o{ ChatMessage : "질문-답변"
     User ||--o{ Diary : "보유"
     User ||--o{ Retrospective : "기간 선택"
+    User ||--o{ EventLog : "행동 이벤트"
     Diary }o--o{ Retrospective : "참조"
-    User ||--|| Pet : "P1"
+    Memo {
+        string status "DRAFT-SUMMARIZED-ARCHIVED"
+    }
     DailyChatSession {
         string status "OPEN-ENDED"
         int followUpCount "최대 10"
@@ -181,17 +193,19 @@ erDiagram
 
 ```mermaid
 flowchart LR
-    M["메모 작성<br/>(하루 여러 번)"] --> S["대화하기<br/>→ 세션 시작"]
+    M["Memo 작성<br/>(하루 여러 개)"] --> MS["요약하기<br/>→ MemoSummary 생성"]
+    MS --> NM["새 DRAFT Memo 생성"]
+    MS --> S["MemoSummary 선택<br/>→ 세션 시작"]
     S --> Q["실록이 역질문<br/>(최대 10회)"]
     Q --> E["'끝내기'<br/>→ 세션 종료"]
-    E -.->|"메모 추가 시 새 세션"| S
-    E ==>|"06:00 KST"| D["Diary 1개 자동 정리<br/>+ 채팅 context 초기화<br/>+ persona.md / log.md 갱신"]
-    D --> R["기간 선택<br/>→ 회고 생성"]
+    E ==>|"06:00 KST"| D["Diary 1개 자동 생성<br/>+ 작업 공간 초기화"]
+    D --> R["기간 선택<br/>→ Retrospective 생성"]
 ```
 
-- 메모는 **하루 여러 개**, 세션도 **하루 여러 개**, 하지만 **Diary는 하루 1개**.
+- Memo는 **하루 여러 개**, 세션도 **하루 여러 개**, 하지만 **Diary는 하루 1개**.
+- 대화는 Memo가 아니라 **하나 이상의 MemoSummary 선택**으로 시작한다.
 - 역질문은 **최대 10회**(프롬프트로 강제), '끝내기' 버튼/AI 판단으로 종료.
-- **06:00 KST**: 자동 정리 + 채팅 context 초기화 + 마크다운 문서 갱신.
+- **06:00 KST**: Diary 자동 생성 + 일일 작업 공간 초기화.
 
 ---
 
@@ -217,11 +231,14 @@ git push -u origin main
 
 | 문서 | 핵심 내용 |
 | --- | --- |
+| [`requirements/product.md`](requirements/product.md) | MVP 기능 요구사항 · 제외 범위 · 백엔드 결정사항 |
+| [`requirements/scenarios.md`](requirements/scenarios.md) | 사용자 흐름별 시나리오 · 인수 조건 |
+| [`requirements/decisions.md`](requirements/decisions.md) | 날짜 / 결정 / 이유 / 영향 범위 |
 | [`conventions/api.md`](conventions/api.md) | 에러 envelope 고정 · 06:00 KST 일자 경계 · 세션 라이프사이클 · 인증 · 상태코드 · 페이지네이션 |
 | [`conventions/coding.md`](conventions/coding.md) | 스택 확정 · **BE 2명은 레이어가 아니라 도메인으로 분담** · 디렉터리 · LLM 호출 격리 |
 | [`conventions/git.md`](conventions/git.md) | 한국어 커밋 메시지 · 브랜치 전략 · PR 규칙(영향 범위 명시) |
 | [`conventions/glossary.md`](conventions/glossary.md) | 한↔영 용어 단일화(Diary/Retrospective/Memo …) · 표기 규칙 |
-| [`domain/data-model.md`](domain/data-model.md) | 엔티티 정의 · 세션 종료 정책 · 마크다운 문서 모델 |
+| [`domain/data-model.md`](domain/data-model.md) | 엔티티 정의 · MemoSummary 기반 대화 · EventLog |
 
 ---
 
