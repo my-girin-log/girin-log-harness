@@ -236,6 +236,7 @@ git push -u origin main
 | [`requirements/decisions.md`](requirements/decisions.md) | 날짜 / 결정 / 이유 / 영향 범위 |
 | [`conventions/api.md`](conventions/api.md) | 에러 envelope 고정 · 06:00 KST 일자 경계 · 세션 라이프사이클 · 인증 · 상태코드 · 페이지네이션 |
 | [`conventions/coding.md`](conventions/coding.md) | 스택 확정 · **BE 2명은 레이어가 아니라 도메인으로 분담** · 디렉터리 · LLM 호출 격리 |
+| [`conventions/file-naming.md`](conventions/file-naming.md) | Markdown 보관 구조 · 파일명 · 디렉터리명 기준 |
 | [`conventions/git.md`](conventions/git.md) | 한국어 커밋 메시지 · 브랜치 전략 · PR 규칙(영향 범위 명시) |
 | [`conventions/glossary.md`](conventions/glossary.md) | 한↔영 용어 단일화(Diary/Retrospective/Memo …) · 표기 규칙 |
 | [`domain/data-model.md`](domain/data-model.md) | 엔티티 정의 · MemoSummary 기반 대화 · EventLog |
