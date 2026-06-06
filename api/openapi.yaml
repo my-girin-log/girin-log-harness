@@ -1,43 +1,119 @@
 openapi: 3.1.0
 
-# ──────────────────────────────────────────────────────────────
-# 이 파일은 "계약(Contract)"이며 이 레포의 단일 진실이다.
-# 실제 API 명세를 받으면 paths를 채운다. 아래는 규칙을 인코딩한 골격 +
-# 예시 경로다. 예시는 conventions/api.md 의 약속(에러 envelope, KST, 인증)을
-# 어떻게 표현하는지 보여주기 위한 것으로, 실제 명세로 교체/확장한다.
-# ──────────────────────────────────────────────────────────────
-
 info:
   title: 내가그린기린기록 API
-  version: 0.1.0
+  version: 0.2.0
   description: |
-    AI 캐릭터 '실록이'와 짧게 대화하며 기록하고, Diary와 Persona를 기반으로
-    회고(Retrospective)를 생성하는 우테코 크루용 회고 서비스 API.
+    내가그린기린기록 MVP API 계약.
 
-    - 일자 경계는 06:00 KST. 시각은 ISO 8601 + 오프셋.
-    - 모든 에러는 #/components/responses/Error 형식을 따른다.
+    작성 기준:
+    1. 2026-06-06 MVP 기획안
+    2. Notion API 명세
+    3. 이 레포의 conventions/domain 문서
+
+    기획안과 Notion 명세가 충돌하는 경우 기획안을 우선한다.
 
 servers:
-  - url: https://api.example.com/api/v1   # [확정 필요]
-    description: production
-  - url: http://localhost:8080/api/v1
+  - url: http://localhost:8080
     description: local
+  - url: https://api.example.com
+    description: production [확정 필요]
 
 security:
   - bearerAuth: []
+  - cookieAuth: []
 
 tags:
   - name: auth
-  - name: persona
-  - name: chat        # 메모 / 실록이 역질문 / DailyChatSession
-  - name: diary
-  - name: retrospective
+    description: GitHub OAuth 인증
+  - name: users
+    description: 사용자 정보
+  - name: onboarding
+    description: 온보딩과 Persona 생성
+  - name: personas
+    description: 사용자 말투와 회고 성향
+  - name: memos
+    description: 회고 메모장
+  - name: memoSummaries
+    description: AI 메모 요약
+  - name: chatSessions
+    description: MemoSummary 기반 실록이 대화
+  - name: diaries
+    description: 06:00 KST 자동 생성 Diary
+  - name: retrospectives
+    description: 기간 기반 회고 생성
 
 paths:
-  # ── 예시 1: 인증된 사용자 조회 ──────────────────────────────
-  /users/me:
+  /api/auth/github:
     get:
       tags: [auth]
+      summary: GitHub OAuth 인증 페이지로 리다이렉트
+      operationId: redirectToGitHubOAuth
+      security: []
+      responses:
+        "302":
+          description: GitHub OAuth 인증 페이지로 이동
+          headers:
+            Location:
+              description: GitHub OAuth authorization URL
+              schema:
+                type: string
+                format: uri
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/auth/github/callback:
+    get:
+      tags: [auth]
+      summary: GitHub OAuth callback 처리
+      description: GitHub OAuth code를 검증하고 최초 로그인 사용자는 User를 생성한다.
+      operationId: handleGitHubOAuthCallback
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: GitHub OAuth authorization code
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+          description: CSRF 방지를 위한 OAuth state
+      responses:
+        "302":
+          description: 로그인 완료 후 프론트 URL로 이동
+          headers:
+            Location:
+              description: 로그인 완료 후 이동할 프론트 URL
+              schema:
+                type: string
+                format: uri
+            Set-Cookie:
+              description: 세션 방식 사용 시 인증 세션 쿠키
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /api/auth/logout:
+    post:
+      tags: [auth]
+      summary: 현재 로그인 세션 또는 토큰 만료
+      operationId: logout
+      responses:
+        "204":
+          description: 로그아웃 성공
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /api/users/me:
+    get:
+      tags: [users]
       summary: 내 정보 조회
       operationId: getMe
       responses:
@@ -49,13 +125,334 @@ paths:
                 $ref: "#/components/schemas/User"
         "401":
           $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+    patch:
+      tags: [users]
+      summary: 내 정보 수정
+      operationId: updateMe
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
 
-  # ── 예시 2: 날짜로 Diary 조회 (KST 경계 주의) ───────────────
-  /diaries/{date}:
+  /api/onboarding/submissions:
+    post:
+      tags: [onboarding]
+      summary: 온보딩 설문 제출 및 Persona 생성 요청
+      description: 블로그 링크, 기존 글 원문, 설문 응답을 저장하고 Persona 생성을 요청한다.
+      operationId: submitOnboarding
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitOnboardingRequest"
+      responses:
+        "201":
+          description: 제출 및 Persona 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitOnboardingResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+
+  /api/personas/me:
     get:
-      tags: [diary]
-      summary: 특정 날짜의 Diary 조회
-      description: date 는 KST 캘린더 날짜. 일자 경계는 06:00 KST.
+      tags: [personas]
+      summary: 내 Persona 조회
+      operationId: getMyPersona
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Persona"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+
+  /api/memos:
+    get:
+      tags: [memos]
+      summary: 특정 날짜의 Memo 목록 조회
+      description: date가 없으면 오늘 날짜를 06:00 KST 기준으로 조회한다.
+      operationId: listMemos
+      parameters:
+        - $ref: "#/components/parameters/DateQuery"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoListResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+    post:
+      tags: [memos]
+      summary: Memo 생성
+      description: 사용자가 하루 중 짧은 메모를 작성한다.
+      operationId: createMemo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMemoRequest"
+      responses:
+        "201":
+          description: 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Memo"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /api/memos/{memoId}:
+    patch:
+      tags: [memos]
+      summary: Memo 수정
+      description: 작성 중인 Memo 내용을 수정한다.
+      operationId: updateMemo
+      parameters:
+        - $ref: "#/components/parameters/MemoId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMemoRequest"
+      responses:
+        "200":
+          description: 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Memo"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /api/memos/summaries:
+    post:
+      tags: [memoSummaries]
+      summary: Memo 요약 생성
+      description: |
+        현재 작업 공간의 Memo 전체를 분석해 카테고리별 MemoSummary를 생성한다.
+        하나의 Memo가 여러 주제를 담으면 내용 단위로 분할되어 여러 MemoSummary에 반영될 수 있다.
+        요약이 완료된 Memo는 SUMMARIZED 상태가 되고, 새 DRAFT Memo를 생성한다.
+      operationId: createMemoSummaries
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMemoSummariesRequest"
+      responses:
+        "201":
+          description: 요약 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoSummaryResult"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/memo-summaries:
+    get:
+      tags: [memoSummaries]
+      summary: MemoSummary 목록 조회
+      description: 생성된 카테고리별 MemoSummary 목록을 조회한다. MVP에서 수정/삭제는 제공하지 않는다.
+      operationId: listMemoSummaries
+      parameters:
+        - $ref: "#/components/parameters/DateQuery"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoSummaryListResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /api/chat-sessions:
+    post:
+      tags: [chatSessions]
+      summary: MemoSummary 기반 대화 세션 시작
+      description: |
+        오늘 기획안 기준으로 대화는 Memo가 아니라 하나 이상의 MemoSummary 선택으로 시작한다.
+        세션 시작 시 실록이의 첫 질문을 ChatMessage로 생성한다.
+      operationId: createChatSession
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChatSessionRequest"
+      responses:
+        "201":
+          description: 대화 세션 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatSession"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /api/chat-sessions/{sessionId}:
+    get:
+      tags: [chatSessions]
+      summary: 대화 세션 질문/답변 흐름 조회
+      operationId: getChatSession
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatSession"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+
+  /api/chat-sessions/{sessionId}/messages:
+    post:
+      tags: [chatSessions]
+      summary: 사용자 답변 저장 및 다음 질문 반환
+      description: 사용자 답변을 저장하고 다음 질문 또는 종료 메시지를 반환한다.
+      operationId: createChatMessage
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChatMessageRequest"
+      responses:
+        "200":
+          description: 답변 저장 및 다음 메시지 반환
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateChatMessageResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /api/chat-sessions/{sessionId}/end:
+    post:
+      tags: [chatSessions]
+      summary: 대화 세션 종료
+      description: 사용자가 대화를 직접 종료한다. 종료 메시지를 ChatMessage로 저장한다.
+      operationId: endChatSession
+      parameters:
+        - $ref: "#/components/parameters/SessionId"
+      responses:
+        "200":
+          description: 종료 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatSession"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "409":
+          $ref: "#/components/responses/Error"
+
+  /api/diaries:
+    get:
+      tags: [diaries]
+      summary: 날짜 범위의 Diary 목록 조회
+      operationId: listDiaries
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiaryListResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /api/diaries/{date}:
+    get:
+      tags: [diaries]
+      summary: 특정 날짜의 Diary 상세 조회
+      description: 해당 날짜에 Diary가 아직 생성되지 않았으면 404를 반환한다.
       operationId: getDiaryByDate
       parameters:
         - name: date
@@ -63,8 +460,7 @@ paths:
           required: true
           schema:
             type: string
-            format: date          # YYYY-MM-DD (KST)
-          example: "2026-06-04"
+            format: date
       responses:
         "200":
           description: OK
@@ -72,148 +468,572 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Diary"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
         "404":
           $ref: "#/components/responses/Error"
 
-  # ── 예시 3: 회고 생성 (LLM, 동기/비동기 [확정 필요]) ────────
-  /retrospectives:
+  /api/internal/diaries:
     post:
-      tags: [retrospective]
-      summary: 기간 기반 회고 생성
+      tags: [diaries]
+      summary: Diary 자동 생성 트리거
+      description: 스케줄러가 06:00 KST에 전날 Memo, MemoSummary, ChatMessage를 기반으로 Diary를 자동 생성한다. 일반 클라이언트용 API가 아니다.
+      operationId: generateDailyDiary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateDiaryRequest"
+      responses:
+        "201":
+          description: 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Diary"
+        "409":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
+
+  /api/retrospectives:
+    get:
+      tags: [retrospectives]
+      summary: Retrospective 목록 조회
+      operationId: listRetrospectives
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetrospectiveListResponse"
+        "401":
+          $ref: "#/components/responses/Error"
+    post:
+      tags: [retrospectives]
+      summary: 기간 내 Diary와 Persona 기반 Retrospective 생성
       operationId: createRetrospective
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [periodStart, periodEnd]
-              properties:
-                periodStart: { type: string, format: date }
-                periodEnd:   { type: string, format: date }
-                direction:   { type: string, description: 회고 방향 }
+              $ref: "#/components/schemas/CreateRetrospectiveRequest"
       responses:
         "201":
-          description: 생성됨
+          description: 생성 성공
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Retrospective"
         "400":
           $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "500":
+          $ref: "#/components/responses/Error"
 
-  # TODO: 실제 명세 받으면 아래 영역 채우기 (리뷰 반영 후 갱신)
-  #   - POST /auth/github (GitHub OAuth)
-  #   - PATCH /users/me (닉네임)
-  #   - POST /personas  (온보딩 ~10문항 설문 기반 생성, 글 입력은 fallback)
-  #   - POST /memos  (하루 여러 개)
-  #   - POST /daily-chat-sessions  (메모로 세션 시작)
-  #   - POST /daily-chat-sessions/{id}/messages  (역질문/답변, followUpCount≤10)
-  #   - POST /daily-chat-sessions/{id}/end  ('끝내기' → 마무리 멘트 → status=ENDED)
-  #   - GET /diaries  (목록, 페이지네이션) / GET /diaries/{date}
-  #   - GET /retrospectives/{id}
+  /api/retrospectives/{retrospectiveId}:
+    get:
+      tags: [retrospectives]
+      summary: 생성된 Retrospective Markdown 조회
+      operationId: getRetrospective
+      parameters:
+        - name: retrospectiveId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Retrospective"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
 
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT   # [확정 필요]
+      bearerFormat: JWT
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: SESSION
 
-  # 공통 에러 응답 (conventions/api.md 4절) — 모든 에러는 이걸 재사용
+  parameters:
+    DateQuery:
+      name: date
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date
+      description: 조회할 날짜. 없으면 오늘 날짜를 06:00 KST 기준으로 조회한다.
+    MemoId:
+      name: memoId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+
   responses:
     Error:
       description: 에러
       content:
         application/json:
           schema:
-            type: object
-            required: [error]
-            properties:
-              error:
-                type: object
-                required: [code, message]
-                properties:
-                  code:    { type: string, example: DIARY_NOT_FOUND }
-                  message: { type: string, example: "해당 날짜의 다이어리가 없습니다." }
-                  details: { type: ["object", "null"] }
+            $ref: "#/components/schemas/ErrorResponse"
 
-  # 엔티티 스키마 — domain/data-model.md 와 일치시킨다.
-  # 필드 타입/제약은 실제 명세 확정 시 정밀화. [확정 필요] 표시 참고.
   schemas:
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: "401"
+        message:
+          type: string
+          example: "로그인이 필요합니다."
+        details:
+          type: ["object", "null"]
+
     User:
       type: object
+      required: [id, githubId, githubUsername, onboardingCompleted, createdAt]
       properties:
-        id:        { type: string }
-        githubId:  { type: string }
-        nickname:  { type: string }
-        createdAt: { type: string, format: date-time }
+        id:
+          type: integer
+          format: int64
+        githubId:
+          type: string
+        githubUsername:
+          type: string
+        profileImageUrl:
+          type: ["string", "null"]
+          format: uri
+        nickname:
+          type: ["string", "null"]
+        onboardingCompleted:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+          minLength: 1
+          maxLength: 30
+
+    SubmitOnboardingRequest:
+      type: object
+      required: [answers]
+      properties:
+        blogUrl:
+          type: ["string", "null"]
+          format: uri
+          description: 사용자의 기존 블로그 또는 회고 글 URL. 선택값.
+        rawText:
+          type: ["string", "null"]
+          description: 기존 회고 글 원문. 선택값.
+        answers:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/OnboardingAnswer"
+
+    OnboardingAnswer:
+      type: object
+      required: [questionId, answer]
+      properties:
+        questionId:
+          type: integer
+          minimum: 1
+          maximum: 10
+        answer:
+          type: string
+          minLength: 1
+
+    SubmitOnboardingResponse:
+      type: object
+      required: [personaId, onboardingCompleted]
+      properties:
+        personaId:
+          type: integer
+          format: int64
+        onboardingCompleted:
+          type: boolean
 
     Persona:
       type: object
-      description: 온보딩 ~10문항 설문 기반 생성(글 입력은 fallback).
+      required: [id, userId, tone, thinkingStyle, summary, createdAt]
       properties:
-        id:                 { type: string }
-        userId:             { type: string }
-        tone:               { type: string }
-        thinkingStyle:      { type: string }
-        recurringInterests: { type: array, items: { type: string } }
-        values:             { type: array, items: { type: string } }
-        surveyAnswers:      { type: array, items: { type: string } } # ~10문항
-        markdown:           { type: string }   # persona.md 표현
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        tone:
+          type: string
+        thinkingStyle:
+          type: string
+        recurringInterests:
+          type: array
+          items:
+            type: string
+        organizingHabit:
+          type: string
+        retrospectionCriteria:
+          type: string
+        preferredStructure:
+          type: string
+        summary:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    MemoStatus:
+      type: string
+      enum: [DRAFT, SUMMARIZED, ARCHIVED]
 
     Memo:
       type: object
-      description: 하루 여러 개 가능. 대화 세션의 시작점.
+      required: [id, content, status, createdAt]
       properties:
-        id:        { type: string }
-        userId:    { type: string }
-        date:      { type: string, format: date }   # KST
-        content:   { type: string }
-        createdAt: { type: string, format: date-time }
-
-    DailyChatSession:
-      type: object
-      description: 메모로 시작. 하루 여러 세션 가능. 역질문 최대 10회. 끝내기로 종료.
-      properties:
-        id:               { type: string }
-        userId:           { type: string }
-        date:             { type: string, format: date }     # KST
-        memoId:           { type: string }
-        followUpCount:    { type: integer, minimum: 0, maximum: 10 }
-        maxFollowUpCount: { type: integer, default: 10 }
-        status:           { type: string, enum: [OPEN, ENDED] }
-        endedReason:
+        id:
+          type: integer
+          format: int64
+        content:
+          type: string
+        status:
+          $ref: "#/components/schemas/MemoStatus"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
           type: ["string", "null"]
-          enum: [USER_ENDED, MAX_FOLLOWUP, AI_DECIDED, null]
-        # messages: [확정 필요] 메시지 모델 정의 후 추가
+          format: date-time
+
+    MemoListResponse:
+      type: object
+      required: [date, memos]
+      properties:
+        date:
+          type: string
+          format: date
+        memos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Memo"
+
+    CreateMemoRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+
+    UpdateMemoRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+
+    CreateMemoSummariesRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          description: 생략하면 오늘 날짜를 06:00 KST 기준으로 사용한다.
+
+    MemoSummaryResult:
+      type: object
+      required: [date, memoSummaries, nextMemo]
+      properties:
+        date:
+          type: string
+          format: date
+        memoSummaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemoSummary"
+        nextMemo:
+          $ref: "#/components/schemas/Memo"
+
+    MemoSummaryListResponse:
+      type: object
+      required: [date, memoSummaries]
+      properties:
+        date:
+          type: string
+          format: date
+        memoSummaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemoSummary"
+
+    MemoSummary:
+      type: object
+      required: [id, categoryName, summary, itemCount, items, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        categoryName:
+          type: string
+        summary:
+          type: string
+        itemCount:
+          type: integer
+          minimum: 0
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MemoSummaryItem"
+        createdAt:
+          type: string
+          format: date-time
+
+    MemoSummaryItem:
+      type: object
+      required: [id, memoId, content]
+      properties:
+        id:
+          type: integer
+          format: int64
+        memoId:
+          type: integer
+          format: int64
+        content:
+          type: string
+
+    ChatSessionStatus:
+      type: string
+      enum: [IN_PROGRESS, ENDED]
+
+    ChatMessageRole:
+      type: string
+      enum: [SILOK, USER]
+
+    ChatMessageType:
+      type: string
+      enum: [FOLLOW_UP_QUESTION, USER_ANSWER, CLOSING]
+
+    CreateChatSessionRequest:
+      type: object
+      required: [memoSummaryIds]
+      properties:
+        memoSummaryIds:
+          type: array
+          minItems: 1
+          items:
+            type: integer
+            format: int64
+
+    ChatSession:
+      type: object
+      required: [sessionId, status, questionCount, memoSummaryIds, messages]
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+        status:
+          $ref: "#/components/schemas/ChatSessionStatus"
+        questionCount:
+          type: integer
+          minimum: 0
+          maximum: 10
+        memoSummaryIds:
+          type: array
+          items:
+            type: integer
+            format: int64
+        messages:
+          type: array
+          description: 전체 대화 원문. sequence 오름차순으로 반환한다.
+          items:
+            $ref: "#/components/schemas/ChatMessage"
+        createdAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: ["string", "null"]
+          format: date-time
+
+    ChatMessage:
+      type: object
+      required: [id, role, messageType, content, sequence, createdAt]
+      properties:
+        id:
+          type: integer
+          format: int64
+        role:
+          $ref: "#/components/schemas/ChatMessageRole"
+        messageType:
+          $ref: "#/components/schemas/ChatMessageType"
+        content:
+          type: string
+        sequence:
+          type: integer
+          minimum: 1
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateChatMessageRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+
+    CreateChatMessageResponse:
+      type: object
+      required: [sessionId, status, questionCount, userMessage, assistantMessage]
+      properties:
+        sessionId:
+          type: integer
+          format: int64
+        status:
+          $ref: "#/components/schemas/ChatSessionStatus"
+        questionCount:
+          type: integer
+          minimum: 0
+          maximum: 10
+        userMessage:
+          $ref: "#/components/schemas/ChatMessage"
+        assistantMessage:
+          $ref: "#/components/schemas/ChatMessage"
+
+    GenerateDiaryRequest:
+      type: object
+      required: [date]
+      properties:
+        date:
+          type: string
+          format: date
+          description: 생성할 Diary 날짜. 06:00 KST 기준 전날 날짜.
 
     Diary:
       type: object
+      required: [id, date, summary, markdown, createdAt]
       properties:
-        id:        { type: string }
-        userId:    { type: string }
-        date:      { type: string, format: date }   # KST, 하루 1개
-        content:   { type: string }
-        createdAt: { type: string, format: date-time }
+        id:
+          type: integer
+          format: int64
+        date:
+          type: string
+          format: date
+        summary:
+          type: string
+          description: 회고 생성에 사용할 하루 요약
+        mainEvents:
+          type: array
+          items:
+            type: string
+        emotionContext:
+          type: string
+        concerns:
+          type: string
+        newCriteria:
+          type: string
+        nextActions:
+          type: string
+        markdown:
+          type: string
+          description: Diary Markdown 본문
+        createdAt:
+          type: string
+          format: date-time
+
+    DiaryListResponse:
+      type: object
+      required: [diaries]
+      properties:
+        diaries:
+          type: array
+          items:
+            $ref: "#/components/schemas/Diary"
+
+    CreateRetrospectiveRequest:
+      type: object
+      required: [startDate, endDate]
+      properties:
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
 
     Retrospective:
       type: object
+      required: [id, startDate, endDate, title, markdown, createdAt]
       properties:
-        id:          { type: string }
-        userId:      { type: string }
-        periodStart: { type: string, format: date }
-        periodEnd:   { type: string, format: date }
-        direction:   { type: string }
-        content:     { type: string }              # Markdown
-        createdAt:   { type: string, format: date-time }
+        id:
+          type: integer
+          format: int64
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        title:
+          type: string
+        markdown:
+          type: string
+          description: 회고 Markdown 본문
+        createdAt:
+          type: string
+          format: date-time
 
-    Pet:
+    RetrospectiveListResponse:
       type: object
-      description: P1 기능
+      required: [retrospectives]
       properties:
-        id:     { type: string }
-        userId: { type: string }
-        exp:    { type: integer }
-        level:  { type: integer }
-        streak: { type: integer }
+        retrospectives:
+          type: array
+          items:
+            $ref: "#/components/schemas/Retrospective"
