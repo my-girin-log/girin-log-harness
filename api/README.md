@@ -11,7 +11,7 @@
 ## 유효성 검사
 
 ```bash
-# Redocly CLI 예시 (도구는 팀 합의 [확정 필요])
+# Redocly CLI (검증 도구로 확정. harness hook도 동일하게 사용)
 npx @redocly/cli lint openapi.yaml
 ```
 
