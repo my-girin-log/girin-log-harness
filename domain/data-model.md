@@ -44,7 +44,7 @@ Persona 생성을 위한 원천 입력. 블로그 링크, 기존 글 원문, 설
 | `userId` | 소유자 | |
 | `sourceType` | 입력 종류 | `BLOG_URL` / `TEXT` / `SURVEY` |
 | `content` | 원천 내용 | URL 또는 원문 |
-| `analysisStatus` | 분석 상태 | `[확정 필요]` |
+| `analysisStatus` | 분석 상태 | `PENDING` / `ANALYZING` / `COMPLETED` / `FAILED` (BLOG_URL만 분석 대상, FAILED여도 설문 기반 Persona 생성 가능) |
 | `createdAt` | 생성 시각 | |
 
 ## Persona
@@ -201,7 +201,7 @@ MVP 검증 지표 수집을 위한 얇은 append-only 이벤트 로그.
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
 | `id` | 식별자 | |
-| `userId` | 사용자 | 비로그인 이벤트 필요 여부 `[확정 필요]` |
+| `userId` | 사용자 | **필수(NOT NULL)**. 비로그인 이벤트는 MVP에서 저장하지 않는다. |
 | `eventType` | 이벤트 종류 | 예: `MEMO_CREATED` |
 | `occurredAt` | 발생 시각 | |
 | `metadataJson` | 부가 정보 | PostgreSQL `jsonb` 검토 |

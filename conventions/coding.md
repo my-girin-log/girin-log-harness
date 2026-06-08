@@ -22,15 +22,17 @@
 ⚠️ **레이어로 나누지 말 것.** (A=컨트롤러 전부, B=리포지토리 전부 → 모든 기능마다 충돌)
 **도메인(바운디드 컨텍스트)으로 세로로 나눈다.** 각자 컨트롤러~서비스~리포지토리를 다 가져간다.
 
-분담 예시(`[확정 필요]`, 팀이 합의):
+분담(아래로 확정. 인력이 바뀌면 같은 경계 기준으로 재배정):
 
 | 담당 | 도메인 |
 | --- | --- |
-| BE-A | 인증(User/GitHub OAuth), Persona |
-| BE-B | 기록(Memo/MemoSummary/DailyChatSession), Diary, Retrospective |
+| BE-A | 인증(User/GitHub OAuth), 온보딩(OnboardingSurvey), Persona/PersonaSource |
+| BE-B | 기록(Memo/MemoSummary/DailyChatSession), Diary, Retrospective, EventLog |
 | 공유 | 실록이 LLM 연동 모듈, 공통 에러/응답, KST 시각 유틸 |
 
-경계가 닿는 부분(실록이 호출, 공통 에러 포맷, 06:00 KST 유틸)은 **먼저 인터페이스만 합의**하고 각자 구현한다.
+나눈 기준: **BE-A는 "사용자 정체성·말투"**(Persona가 Retrospective의 근거), **BE-B는 "일일 기록 → Diary → Retrospective 파이프라인"**. 둘의 접점은 Retrospective가 Persona(`persona.md`)를 읽는 지점 하나로 좁힌다.
+
+경계가 닿는 부분(실록이 호출, 공통 에러 포맷, 06:00 KST 유틸, Persona 조회)은 **먼저 인터페이스만 합의**하고 각자 구현한다.
 
 ## 2. 디렉터리 (도메인 우선)
 
