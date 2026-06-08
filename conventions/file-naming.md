@@ -5,7 +5,7 @@
 
 ## 원칙
 
-- 도메인 개념은 `Memo`, `MemoSummary`, `DailyChatSession`, `ChatMessage`, `Diary`, `Persona`를 사용한다.
+- 도메인 개념은 `Memo`, `MemoSummary`, `DailyChatSession`, `Diary`, `Persona`를 사용한다. 전체 대화 원문은 별도 엔티티가 아니라 `DailyChatSession`의 `conversation`이다.
 - 파일명은 소문자 `kebab-case`를 사용한다.
 - 하루에 여러 개 생기는 데이터는 파일명도 복수형으로 쓴다.
 - `journal`은 `Diary`와 혼동될 수 있으므로 디렉터리명으로 쓰지 않는다.
@@ -18,7 +18,7 @@
   2025-06-05/
     memos.md                  # 원본 Memo 목록
     memo-summaries.md         # Memo 분할 + 카테고리별 MemoSummary
-    daily-chat-sessions.md    # DailyChatSession과 전체 ChatMessage 원문
+    daily-chat-sessions.md    # DailyChatSession과 전체 대화 원문(conversation)
     diary.md                  # 06:00 KST 자동 생성 Diary
   2025-06-06/
     ...
@@ -33,7 +33,7 @@
 | `/journal/` | `/daily-records/` | `Journal`은 쓰지 않는 용어이고 `Diary`와 혼동된다. |
 | `memo.md` | `memos.md` | Memo는 하루에 여러 개 생성될 수 있다. |
 | `memoSummary.md` | `memo-summaries.md` | 파일명은 kebab-case, MemoSummary는 여러 개 생성될 수 있다. |
-| `chat.md` | `daily-chat-sessions.md` | 대화는 세션 단위이며, 내부에 ChatMessage가 순서대로 쌓인다. |
+| `chat.md` | `daily-chat-sessions.md` | 대화는 세션 단위이며, 전체 대화 원문이 세션 안에 순서대로 저장된다. |
 | `diary.md` | `diary.md` | 날짜별 1개 생성되는 Diary와 대응한다. |
 | `/persona/persona.md` | `/persona/persona.md` | Persona 누적 신호를 담는 내부용 파일로 유지한다. |
 
@@ -56,7 +56,7 @@ MVP에서 MemoSummary는 조회만 가능하며 수정/삭제하지 않는다.
 ### `daily-chat-sessions.md`
 
 하나 이상의 MemoSummary를 선택해 시작한 DailyChatSession과, 그 안에서 오간 전체
-ChatMessage 원문을 저장한다.
+대화 원문(`conversation`)을 저장한다. 별도 메시지 엔티티 없이 세션 하나에 전체 대화를 담는다.
 
 예시:
 
@@ -64,7 +64,7 @@ ChatMessage 원문을 저장한다.
 ## DailyChatSession 3
 
 selectedMemoSummaryIds: [10, 11]
-status: IN_PROGRESS
+status: OPEN
 
 1. SILOK: 오늘 코드 리뷰에서 가장 신경 쓰였던 지점은 뭐였어?
 2. USER: collect를 toList로 바꾸는 리뷰에서 기준을 잘 설명하지 못한 게 아쉬웠어.
@@ -74,8 +74,9 @@ status: IN_PROGRESS
 
 ### `diary.md`
 
-매일 06:00 KST에 전날의 Memo, MemoSummary, ChatMessage를 종합해 자동 생성되는
-Diary다. 사용자가 날짜별로 조회하는 요약이며, Retrospective 생성의 입력으로 사용한다.
+매일 06:00 KST에 전날의 DailyChatSession들을 종합해 자동 생성되는 Diary다.
+원본 Memo·MemoSummary는 Diary 생성의 직접 입력이 아니다. 사용자가 날짜별로 조회하는
+요약이며, Retrospective 생성에는 Diary가 아니라 기간 내 DailyChatSession 원문을 사용한다.
 
 ### `/persona/persona.md`
 
@@ -90,5 +91,5 @@ Persona 파일이다. 사용자에게 직접 보여주기보다는 Retrospective
 | `journal` | `daily-records` 또는 `diary` |
 | `memoSummary.md` | `memo-summaries.md` |
 | `chat.md` | `daily-chat-sessions.md` |
-| `Chat` | `ChatMessage` 또는 `DailyChatSession` |
+| `Chat`, `ChatMessage` | `DailyChatSession` (대화 원문은 `conversation` 필드) |
 | `Review`, `Retro`, `Reflection` | `Retrospective` |
