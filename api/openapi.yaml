@@ -2,7 +2,7 @@ openapi: 3.1.0
 
 info:
   title: 내가그린기린기록 API
-  version: 0.2.0
+  version: 0.3.0
   description: |
     내가그린기린기록 MVP API 계약.
 
@@ -322,8 +322,8 @@ paths:
       tags: [chatSessions]
       summary: MemoSummary 기반 대화 세션 시작
       description: |
-        오늘 기획안 기준으로 대화는 Memo가 아니라 하나 이상의 MemoSummary 선택으로 시작한다.
-        세션 시작 시 실록이의 첫 질문을 ChatMessage로 생성한다.
+        대화는 Memo가 아니라 하나 이상의 MemoSummary 선택으로 시작한다.
+        세션 시작 시 실록이의 첫 질문을 conversation에 추가한다.
       operationId: createChatSession
       requestBody:
         required: true
@@ -366,12 +366,12 @@ paths:
         "404":
           $ref: "#/components/responses/Error"
 
-  /api/chat-sessions/{sessionId}/messages:
+  /api/chat-sessions/{sessionId}/answers:
     post:
       tags: [chatSessions]
       summary: 사용자 답변 저장 및 다음 질문 반환
-      description: 사용자 답변을 저장하고 다음 질문 또는 종료 메시지를 반환한다.
-      operationId: createChatMessage
+      description: 사용자 답변을 conversation에 추가하고, 다음 역질문 또는 마무리 멘트까지 반영된 세션을 반환한다.
+      operationId: submitChatAnswer
       parameters:
         - $ref: "#/components/parameters/SessionId"
       requestBody:
@@ -379,14 +379,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateChatMessageRequest"
+              $ref: "#/components/schemas/SubmitChatAnswerRequest"
       responses:
         "200":
-          description: 답변 저장 및 다음 메시지 반환
+          description: 답변 저장 및 갱신된 세션 반환
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateChatMessageResponse"
+                $ref: "#/components/schemas/ChatSession"
         "400":
           $ref: "#/components/responses/Error"
         "401":
@@ -400,7 +400,7 @@ paths:
     post:
       tags: [chatSessions]
       summary: 대화 세션 종료
-      description: 사용자가 대화를 직접 종료한다. 종료 메시지를 ChatMessage로 저장한다.
+      description: 사용자가 대화를 직접 종료한다. 마무리 멘트를 conversation에 추가하고 closingMessage로 저장한다.
       operationId: endChatSession
       parameters:
         - $ref: "#/components/parameters/SessionId"
@@ -479,7 +479,7 @@ paths:
     post:
       tags: [diaries]
       summary: Diary 자동 생성 트리거
-      description: 스케줄러가 06:00 KST에 전날 Memo, MemoSummary, ChatMessage를 기반으로 Diary를 자동 생성한다. 일반 클라이언트용 API가 아니다.
+      description: 스케줄러가 06:00 KST에 전날 DailyChatSession들을 기반으로 Diary를 자동 생성한다. 원본 Memo·MemoSummary는 직접 입력이 아니다. 일반 클라이언트용 API가 아니다.
       operationId: generateDailyDiary
       requestBody:
         required: true
@@ -515,7 +515,7 @@ paths:
           $ref: "#/components/responses/Error"
     post:
       tags: [retrospectives]
-      summary: 기간 내 Diary와 Persona 기반 Retrospective 생성
+      summary: 기간 내 DailyChatSession 원문과 persona.md 기반 Retrospective 생성
       operationId: createRetrospective
       requestBody:
         required: true
@@ -721,6 +721,9 @@ components:
           type: string
         summary:
           type: string
+        markdown:
+          type: ["string", "null"]
+          description: persona.md 표현. Retrospective 생성 입력으로 사용한다.
         createdAt:
           type: string
           format: date-time
@@ -849,15 +852,16 @@ components:
 
     ChatSessionStatus:
       type: string
-      enum: [IN_PROGRESS, ENDED]
+      enum: [OPEN, ENDED]
 
-    ChatMessageRole:
+    ConversationRole:
       type: string
       enum: [SILOK, USER]
 
-    ChatMessageType:
+    EndedReason:
       type: string
-      enum: [FOLLOW_UP_QUESTION, USER_ANSWER, CLOSING]
+      description: 세션 종료 사유. 진행 중인 세션에는 없다.
+      enum: [USER_ENDED, MAX_FOLLOWUP, AI_DECIDED]
 
     CreateChatSessionRequest:
       type: object
@@ -870,29 +874,50 @@ components:
             type: integer
             format: int64
 
+    ConversationTurn:
+      type: object
+      description: 대화 원문의 한 발화. 별도 엔티티가 아니라 세션 conversation의 한 줄이다.
+      required: [role, content]
+      properties:
+        role:
+          $ref: "#/components/schemas/ConversationRole"
+        content:
+          type: string
+
     ChatSession:
       type: object
-      required: [sessionId, status, questionCount, memoSummaryIds, messages]
+      required: [sessionId, status, followUpCount, maxFollowUpCount, memoSummaryIds, conversation]
       properties:
         sessionId:
           type: integer
           format: int64
         status:
           $ref: "#/components/schemas/ChatSessionStatus"
-        questionCount:
+        followUpCount:
           type: integer
+          description: 누적 역질문 횟수
           minimum: 0
           maximum: 10
+        maxFollowUpCount:
+          type: integer
+          description: 역질문 상한
+          default: 10
         memoSummaryIds:
           type: array
+          description: 세션 시작 시 선택한 MemoSummary 목록
           items:
             type: integer
             format: int64
-        messages:
+        conversation:
           type: array
-          description: 전체 대화 원문. sequence 오름차순으로 반환한다.
+          description: 전체 대화 원문. 실록이 질문·사용자 답변·마무리 멘트를 순서대로 담는다.
           items:
-            $ref: "#/components/schemas/ChatMessage"
+            $ref: "#/components/schemas/ConversationTurn"
+        endedReason:
+          $ref: "#/components/schemas/EndedReason"
+        closingMessage:
+          type: ["string", "null"]
+          description: 종료 시 실록이 마무리 멘트
         createdAt:
           type: string
           format: date-time
@@ -900,51 +925,14 @@ components:
           type: ["string", "null"]
           format: date-time
 
-    ChatMessage:
-      type: object
-      required: [id, role, messageType, content, sequence, createdAt]
-      properties:
-        id:
-          type: integer
-          format: int64
-        role:
-          $ref: "#/components/schemas/ChatMessageRole"
-        messageType:
-          $ref: "#/components/schemas/ChatMessageType"
-        content:
-          type: string
-        sequence:
-          type: integer
-          minimum: 1
-        createdAt:
-          type: string
-          format: date-time
-
-    CreateChatMessageRequest:
+    SubmitChatAnswerRequest:
       type: object
       required: [content]
       properties:
         content:
           type: string
           minLength: 1
-
-    CreateChatMessageResponse:
-      type: object
-      required: [sessionId, status, questionCount, userMessage, assistantMessage]
-      properties:
-        sessionId:
-          type: integer
-          format: int64
-        status:
-          $ref: "#/components/schemas/ChatSessionStatus"
-        questionCount:
-          type: integer
-          minimum: 0
-          maximum: 10
-        userMessage:
-          $ref: "#/components/schemas/ChatMessage"
-        assistantMessage:
-          $ref: "#/components/schemas/ChatMessage"
+          description: 사용자 답변 내용
 
     GenerateDiaryRequest:
       type: object
@@ -1020,6 +1008,12 @@ components:
         endDate:
           type: string
           format: date
+        sourceDailyChatSessionIds:
+          type: array
+          description: 회고 생성에 사용한 DailyChatSession 목록
+          items:
+            type: integer
+            format: int64
         title:
           type: string
         markdown:
