@@ -15,7 +15,7 @@
 | Frontend | Next.js + TypeScript + Emotion + TanStack Query | |
 | 타입 생성 | OpenAPI → FE 타입 자동 생성 | `harness/SETUP.md` |
 | 테스트 | JUnit 5 + AssertJ + Mockito / 통합은 Testcontainers PostgreSQL | 상세는 `conventions/testing.md` |
-| 패키지/모듈 매니저 | `[확정 필요]` | |
+| 패키지/모듈 매니저 | FE는 **npm**, BE는 **Gradle** | FE는 yarn/pnpm 혼용 금지, `package-lock.json` 커밋 |
 
 ## 1. 백엔드 2명 분담 — 레이어가 아니라 도메인으로 자른다
 
@@ -27,7 +27,7 @@
 | 담당 | 도메인 |
 | --- | --- |
 | BE-A | 인증(User/GitHub OAuth), Persona |
-| BE-B | 기록(Memo/MemoSummary/DailyChatSession/ChatMessage), Diary, Retrospective |
+| BE-B | 기록(Memo/MemoSummary/DailyChatSession), Diary, Retrospective |
 | 공유 | 실록이 LLM 연동 모듈, 공통 에러/응답, KST 시각 유틸 |
 
 경계가 닿는 부분(실록이 호출, 공통 에러 포맷, 06:00 KST 유틸)은 **먼저 인터페이스만 합의**하고 각자 구현한다.
@@ -125,7 +125,7 @@ src/
 순서는 ① 연관성 식별 → ② 데이터 구조화 → ③ 시그니처 교체.
 **금지:** 개수를 줄이려고 연관 없는 데이터를 한 객체에 억지로 넣지 않는다.
 
-**원시값 포장·일급 컬렉션:** 의미 있는 제약이 붙는 값은 값 객체로 감싼다(예: `FollowUpCount`가 0~10을 스스로 보장). 컬렉션은 `ChatMessages`처럼 감싸 정렬·상한 규칙을 그 안에 둔다.
+**원시값 포장·일급 컬렉션:** 의미 있는 제약이 붙는 값은 값 객체로 감싼다(예: `FollowUpCount`가 0~10을 스스로 보장). 여러 개를 다루는 컬렉션은 `MemoSummaries`처럼 감싸 "하나 이상 선택" 같은 규칙을 그 안에 둔다.
 
 ## 7. 공통 규칙
 
