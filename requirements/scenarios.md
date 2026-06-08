@@ -43,13 +43,14 @@
 1. 사용자는 하나 이상의 MemoSummary를 선택한다.
 2. 시스템은 선택된 MemoSummary를 기반으로 DailyChatSession을 시작한다.
 3. 실록이는 한 번에 하나의 역질문만 생성한다.
-4. 실록이 질문, 사용자 답변, 마무리 멘트는 ChatMessage로 순서대로 모두 저장된다.
+4. 실록이 질문, 사용자 답변, 마무리 멘트는 DailyChatSession 안에 전체 대화 원문으로 저장된다.
 5. 사용자는 언제든 끝내기 버튼으로 세션을 종료할 수 있다.
 
 ### 인수 조건
 
 - DailyChatSession은 Memo가 아니라 MemoSummary 선택으로 시작해야 한다.
-- 전체 대화 내용은 DailyChatSession과 그에 속한 ChatMessage 목록으로 복원할 수 있어야 한다.
+- 전체 대화 내용은 DailyChatSession 하나만으로 복원할 수 있어야 한다.
+- 메시지 단위의 별도 ChatMessage 엔티티는 만들지 않는다.
 - 한 세션의 역질문은 최대 10회다.
 - 종료 시 짧은 마무리 멘트를 제공해야 한다.
 - 종료 사유는 사용자 종료, 최대 질문 수 도달, AI 판단 종료를 구분할 수 있어야 한다.
@@ -59,8 +60,8 @@
 ### 흐름
 
 1. 매일 06:00 KST에 시스템이 전날 작업 공간을 정리한다.
-2. 전날 Memo, MemoSummary, ChatMessage를 종합해 Diary를 생성한다.
-3. 하루에 여러 Memo와 여러 DailyChatSession이 있어도 Diary는 날짜별 하나만 생성한다.
+2. 전날 DailyChatSession들을 종합해 Diary를 생성한다.
+3. 하루에 여러 DailyChatSession이 있어도 Diary는 날짜별 하나만 생성한다.
 4. 기존 데이터는 삭제하지 않고 보관한다.
 5. 이후 새로운 빈 Memo를 생성할 수 있는 상태가 된다.
 
@@ -68,6 +69,8 @@
 
 - 이 서비스의 하루 경계는 00:00이 아니라 06:00 KST다.
 - 06:00 KST 이전 새벽 기록은 전날 기록으로 계산한다.
+- 원본 Memo와 MemoSummary는 Diary 생성 입력으로 직접 사용하지 않는다.
+- Diary는 사용자가 하루를 어떻게 보냈는지 요약하는 날짜별 정리본이다.
 - Diary 수동 생성은 MVP 범위가 아니다.
 - Diary가 아직 생성되지 않은 날짜는 생성 전 상태를 안내해야 한다.
 
@@ -76,13 +79,14 @@
 ### 흐름
 
 1. 사용자는 시작 날짜와 종료 날짜를 선택한다.
-2. 시스템은 기간 내 Diary와 Persona를 기반으로 Retrospective를 생성한다.
+2. 시스템은 선택 기간의 DailyChatSession 전체 대화 원문과 persona.md를 기반으로 Retrospective를 생성한다.
 3. 생성된 Retrospective는 Markdown으로 저장된다.
 4. 사용자는 생성된 Retrospective를 조회하고 Markdown을 복사하거나 다운로드한다.
 
 ### 인수 조건
 
 - Retrospective에는 제목, 도입, 주요 경험, 고민과 판단 기준, 배운 점, 다음에 다르게 해볼 점, 마무리가 포함되어야 한다.
+- Diary는 Retrospective 생성의 직접 입력이 아니다.
 - Markdown 복사/다운로드는 별도 서버 API 없이 FE 기능으로 처리한다.
 
 ## 6. EventLog 저장

@@ -50,7 +50,8 @@ Persona 생성을 위한 원천 입력. 블로그 링크, 기존 글 원문, 설
 ## Persona
 
 사용자의 말투, 사고 흐름, 관심사, 정리 습관, 회고 기준을 요약한 정보.
-Retrospective 생성 시 "사용자다움"의 근거가 된다.
+Retrospective 생성 시 "사용자다움"의 근거가 된다. 회고 생성에는 누적된 `persona.md`
+표현을 사용한다.
 
 블로그 링크 분석 결과, 기존 글 원문, 온보딩 설문 응답을 함께 사용하되 일부 입력만 있어도
 Persona를 생성할 수 있어야 한다.
@@ -66,6 +67,7 @@ Persona를 생성할 수 있어야 한다.
 | `retrospectionCriteria` | 회고 기준 | |
 | `preferredStructure` | 선호 글 구조 | |
 | `summary` | 회고 생성용 요약 Persona | |
+| `markdown` | `persona.md` 표현 | Retrospective 생성 입력 |
 | `createdAt` | 생성 시각 | |
 | `updatedAt` | 수정 시각 | |
 
@@ -109,6 +111,9 @@ MVP에서는 조회만 가능하며 수정/삭제하지 않는다.
 ## DailyChatSession
 
 하나 이상의 MemoSummary를 기반으로 시작되는 실록이 대화 세션.
+MVP에서는 메시지 단위의 별도 ChatMessage 엔티티를 두지 않고, 하나의
+DailyChatSession 안에 전체 대화 원문을 저장한다.
+Diary와 Retrospective 생성의 핵심 입력이다.
 
 ### 라이프사이클
 
@@ -117,6 +122,7 @@ MVP에서는 조회만 가능하며 수정/삭제하지 않는다.
 - 실록이의 역질문은 최대 10회로 제한한다.
 - 사용자는 언제든 끝내기 버튼으로 종료할 수 있다.
 - 종료 시 짧은 마무리 멘트를 제공한다.
+- 실록이 질문, 사용자 답변, 마무리 멘트는 `conversation`에 순서가 드러나도록 저장한다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
@@ -126,6 +132,7 @@ MVP에서는 조회만 가능하며 수정/삭제하지 않는다.
 | `selectedMemoSummaryIds` | 선택된 MemoSummary 목록 | 관계 테이블 검토 |
 | `followUpCount` | 누적 역질문 횟수 | 0~10 |
 | `maxFollowUpCount` | 역질문 상한 | 기본 10 |
+| `conversation` | 전체 대화 원문 | 실록이 질문, 사용자 답변, 마무리 멘트를 순서대로 포함 |
 | `status` | 세션 상태 | `OPEN` / `ENDED` |
 | `endedReason` | 종료 사유 | `USER_ENDED` / `MAX_FOLLOWUP` / `AI_DECIDED` |
 | `closingMessage` | 종료 시 마무리 멘트 | |
@@ -135,50 +142,26 @@ MVP에서는 조회만 가능하며 수정/삭제하지 않는다.
 DailyChatSession 예시:
 
 ```text
-DailyChatSession
+selectedMemoSummaryIds: [10, 11]
+status: OPEN
+followUpCount: 2
+
 1. SILOK: ~~을 할 때는 무슨 감정이었어?
 2. USER: ~~이었어.
 3. SILOK: 그럼 ~~ 이런 부분에서는 ~~이랬던 거야?
 4. USER: 아니야. 나는 이렇게 느꼈어.
 ```
 
-## ChatMessage
-
-DailyChatSession 안에서 오간 실록이 질문, 사용자 답변, 마무리 멘트를 순서대로 모두
-저장하는 메시지 단위 데이터다. 전체 대화 내용은 하나의 DailyChatSession과 그에 속한
-여러 ChatMessage를 순서대로 읽어 복원한다.
-
-엔티티명은 `Chat`이 아니라 `ChatMessage`로 통일한다. `ChatMessage`는 대화 일부만
-저장하는 요약 데이터가 아니라, Diary 생성에 사용할 전체 대화 원문 로그다.
-
-| 필드 | 설명 | 비고 |
-| --- | --- | --- |
-| `id` | 식별자 | |
-| `dailyChatSessionId` | 소속 세션 | |
-| `sender` | 발화자 | `SILOK` / `USER` |
-| `messageType` | 메시지 종류 | `FOLLOW_UP_QUESTION` / `USER_ANSWER` / `CLOSING` |
-| `content` | 메시지 내용 | |
-| `sequence` | 세션 내 순서 | |
-| `createdAt` | 생성 시각 | |
-
-ChatMessage 단일 레코드 예시:
-
-```text
-sender: SILOK
-messageType: FOLLOW_UP_QUESTION
-content: ~~을 할 때는 무슨 감정이었어?
-sequence: 1
-```
-
 ## Diary
 
-하루의 Memo, MemoSummary, ChatMessage를 종합한 일일 기록. 날짜별 하나만 생성된다.
+하루의 DailyChatSession들을 모아 사용자가 하루를 어떻게 보냈는지 요약한 날짜별 정리본.
+날짜별 하나만 생성된다. 원본 Memo와 MemoSummary는 Diary 생성 입력으로 직접 사용하지 않는다.
 
 ### 06:00 KST 동작
 
 - 매일 06:00 KST에 전날 데이터를 기반으로 자동 생성한다.
 - 수동 생성은 MVP 범위가 아니다.
-- 기존 Memo, MemoSummary, ChatMessage는 삭제하지 않고 보관한다.
+- 기존 Memo, MemoSummary, DailyChatSession은 삭제하지 않고 보관한다.
 - 06:00 KST 이후 작업 공간에서는 이전 Memo를 `ARCHIVED`로 취급한다.
 
 | 필드 | 설명 | 비고 |
@@ -197,7 +180,8 @@ sequence: 1
 
 ## Retrospective
 
-기간 내 Diary와 Persona를 기반으로 생성한 완성형 회고 글.
+선택 기간의 DailyChatSession 전체 대화 원문과 `persona.md`를 기반으로 생성한 완성형
+회고 글. Diary는 Retrospective 생성의 직접 입력이 아니다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
@@ -205,6 +189,7 @@ sequence: 1
 | `userId` | 소유자 | |
 | `periodStart` | 시작 날짜 | |
 | `periodEnd` | 종료 날짜 | |
+| `sourceDailyChatSessionIds` | 회고 생성에 사용한 DailyChatSession 목록 | |
 | `title` | 제목 | |
 | `content` | 생성된 Markdown | 복사/다운로드 대상 |
 | `createdAt` | 생성 시각 | |
@@ -242,7 +227,9 @@ User 1 ── 1 Persona
 User 1 ── N Memo
 Memo 1 ── N MemoSummary
 MemoSummary N ── N DailyChatSession
-DailyChatSession 1 ── N ChatMessage
+DailyChatSession N ──> Diary
+DailyChatSession N ──> Retrospective
+Persona 1 ──> Retrospective
 User 1 ── N Diary       (date 기준 하루 1개)
 User 1 ── N Retrospective
 User 1 ── N EventLog
