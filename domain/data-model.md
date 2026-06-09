@@ -95,18 +95,34 @@ Persona를 생성할 수 있어야 한다.
 
 ## MemoSummary
 
-Memo 전체 내용을 AI가 읽고 카테고리별로 재구성한 요약본.
+Memo 전체 내용을 AI가 읽고 **카테고리별로 재구성한 요약본**. 한 카테고리(MemoSummary)는
+여러 원본 Memo 조각을 묶을 수 있고, 각 조각은 `MemoSummaryItem`으로 표현된다.
 MVP에서는 조회만 가능하며 수정/삭제하지 않는다.
+
+**상태(status)를 두지 않는다.** 조회 전용이고, 대화 "선택"은 세션이 들고 있는 일시적 행위다.
+`PENDING`/`USED`/`EXPIRED` 같은 큐 상태를 도입하지 않는다(2026-06-09 결정). "오늘 목록"은
+`serviceDate` 필터로 처리하고, 한 MemoSummary는 여러 세션이 재사용할 수 있다(`N──N`).
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
 | `id` | 식별자 | |
 | `userId` | 소유자 | |
-| `memoId` | 요약 대상 Memo | |
 | `date` | 서비스 기준 날짜(KST) | |
 | `categoryName` | 카테고리명 | |
 | `summary` | 요약 내용 | |
+| `itemCount` | 묶인 항목 수 | `items` 길이 |
+| `items` | 카테고리에 묶인 요약 항목 목록 | `MemoSummaryItem[]` |
 | `createdAt` | 생성 시각 | |
+
+### MemoSummaryItem
+
+한 카테고리에 묶인 개별 요약 항목.
+
+| 필드 | 설명 | 비고 |
+| --- | --- | --- |
+| `id` | 식별자 | |
+| `memoId` | 원본 Memo 연결 | **서버 내부 추적용. API 응답에는 포함하지 않는다**(2026-06-09 결정) |
+| `content` | 항목 내용 | 사용자 노출 |
 
 ## DailyChatSession
 
@@ -128,13 +144,14 @@ Diary와 Retrospective 생성의 핵심 입력이다.
 | --- | --- | --- |
 | `id` | 식별자 | |
 | `userId` | 소유자 | |
-| `date` | 서비스 기준 날짜(KST) | |
-| `selectedMemoSummaryIds` | 선택된 MemoSummary 목록 | 관계 테이블 검토 |
+| `date` | 서비스 기준 날짜(KST) | **생성 시점 06:00 경계 기준. 한 세션은 하나의 serviceDate에만 속한다**(2026-06-09 결정) |
+| `selectedMemoSummaryIds` | 선택된 MemoSummary 목록 | 관계 테이블 검토. 모두 같은 serviceDate여야 한다 |
+| `selectedSummariesSnapshot` | 시작 시점 선택 Summary 내용 스냅샷 | **대화 기록 보존용 snapshot**(jsonb). 원본 변경과 무관하게 대화 맥락 고정(2026-06-09 결정) |
 | `followUpCount` | 누적 역질문 횟수 | 0~10 |
 | `maxFollowUpCount` | 역질문 상한 | 기본 10 |
 | `conversation` | 전체 대화 원문 | 실록이 질문, 사용자 답변, 마무리 멘트를 순서대로 포함 |
 | `status` | 세션 상태 | `OPEN` / `ENDED` |
-| `endedReason` | 종료 사유 | `USER_ENDED` / `MAX_FOLLOWUP` / `AI_DECIDED` |
+| `endedReason` | 종료 사유 | `USER_ENDED` / `MAX_FOLLOWUP` / `AI_DECIDED` / `SYSTEM_ENDED`(06:00 자동 종료) |
 | `closingMessage` | 종료 시 마무리 멘트 | |
 | `createdAt` | 생성 시각 | |
 | `endedAt` | 종료 시각 | |
@@ -180,8 +197,8 @@ followUpCount: 2
 
 ## Retrospective
 
-선택 기간의 DailyChatSession 전체 대화 원문과 `persona.md`를 기반으로 생성한 완성형
-회고 글. Diary는 Retrospective 생성의 직접 입력이 아니다.
+선택 기간의 DailyChatSession 전체 대화 원문 + 원본 `Memo` + `MemoSummary` + `persona.md`를
+기반으로 생성한 완성형 회고 글. Diary는 Retrospective 생성의 직접 입력이 아니다. (2026-06-09 결정)
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |

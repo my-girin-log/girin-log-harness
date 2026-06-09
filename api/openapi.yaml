@@ -294,6 +294,9 @@ paths:
           $ref: "#/components/responses/Error"
         "409":
           $ref: "#/components/responses/Error"
+        "422":
+          # 요약할 DRAFT Memo가 없음(code=NO_SUMMARIZABLE_MEMO). 전체성공/전체실패, 실패 시 Memo는 DRAFT 유지. (conventions/api.md 2-1)
+          $ref: "#/components/responses/Error"
         "500":
           $ref: "#/components/responses/Error"
 
@@ -451,6 +454,40 @@ paths:
         "401":
           $ref: "#/components/responses/Error"
 
+  /api/diaries/calendar:
+    get:
+      tags: [diaries]
+      summary: Diary가 존재하는 날짜 목록 (달력용 경량)
+      description: |
+        마이페이지 달력에서 클릭 가능한 날짜만 표시하기 위한 경량 조회.
+        본문(markdown 등) 없이 Diary가 존재하는 serviceDate 목록만 준다.
+        startDate/endDate로 표시 범위(예: 한 달)를 좁힐 수 있다.
+      operationId: listDiaryDates
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiaryCalendarResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+
   /api/diaries/{date}:
     get:
       tags: [diaries]
@@ -522,7 +559,10 @@ paths:
           $ref: "#/components/responses/Error"
     post:
       tags: [retrospectives]
-      summary: 기간 내 DailyChatSession 원문과 persona.md 기반 Retrospective 생성
+      summary: 기간 내 DailyChatSession 원문·원본 Memo·MemoSummary·persona.md 기반 Retrospective 생성
+      description: |
+        선택 기간(serviceDate)의 DailyChatSession 전체 대화 원문 + 원본 Memo + MemoSummary + persona.md를
+        입력으로 회고를 생성한다. Diary는 직접 입력이 아니다. persona.md가 없거나 오래돼도 graceful하게 생성한다.
       operationId: createRetrospective
       requestBody:
         required: true
@@ -863,12 +903,11 @@ components:
 
     MemoSummaryItem:
       type: object
-      required: [id, memoId, content]
+      # memoId(원본 Memo 연결)는 응답에서 제외한다. 프론트는 원본 연결이 필요 없고,
+      # 추적은 서버 내부에서만 한다. (conventions/api.md 5-1, decisions 2026-06-09)
+      required: [id, content]
       properties:
         id:
-          type: integer
-          format: int64
-        memoId:
           type: integer
           format: int64
         content:
@@ -884,8 +923,10 @@ components:
 
     EndedReason:
       type: string
-      description: 세션 종료 사유. 진행 중인 세션에는 없다.
-      enum: [USER_ENDED, MAX_FOLLOWUP, AI_DECIDED]
+      description: |
+        세션 종료 사유. 진행 중인 세션에는 없다.
+        SYSTEM_ENDED: 06:00 KST 경계에서 OPEN 세션을 시스템이 자동 종료.
+      enum: [USER_ENDED, MAX_FOLLOWUP, AI_DECIDED, SYSTEM_ENDED]
 
     CreateDailyChatSessionRequest:
       type: object
@@ -900,13 +941,19 @@ components:
 
     ConversationTurn:
       type: object
-      description: 대화 원문의 한 발화. 별도 엔티티가 아니라 세션 conversation의 한 줄이다.
+      description: |
+        대화 원문의 한 발화. 별도 엔티티가 아니라 세션 conversation의 한 줄이다.
+        순서는 배열 순서로 보장한다(별도 sequence 필드를 두지 않는다).
       required: [role, content]
       properties:
         role:
           $ref: "#/components/schemas/ConversationRole"
         content:
           type: string
+        createdAt:
+          type: ["string", "null"]
+          format: date-time
+          description: 발화 시각(선택). UI 시간 표시용. 순서 기준은 아니다.
 
     DailyChatSession:
       type: object
@@ -1010,6 +1057,17 @@ components:
         nextCursor:
           type: ["string", "null"]
           description: 다음 페이지 커서. 마지막 페이지면 null.
+
+    DiaryCalendarResponse:
+      type: object
+      required: [dates]
+      properties:
+        dates:
+          type: array
+          description: Diary가 존재하는 serviceDate(KST) 목록. 본문은 포함하지 않는다.
+          items:
+            type: string
+            format: date
 
     CreateRetrospectiveRequest:
       type: object
