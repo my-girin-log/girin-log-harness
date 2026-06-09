@@ -274,7 +274,7 @@ paths:
     get:
       tags: [memoSummaries]
       summary: MemoSummary 목록 조회
-      description: 생성된 카테고리별 MemoSummary 목록을 조회한다. MVP에서 수정/삭제는 제공하지 않는다.
+      description: 생성된 카테고리별 MemoSummary 목록을 조회한다. 이미 대화에 사용된 MemoSummary는 chatAvailable=false로 내려주며 재선택할 수 없다. MVP에서 수정/삭제는 제공하지 않는다.
       operationId: listMemoSummaries
       parameters:
         - $ref: "#/components/parameters/DateQuery"
@@ -296,6 +296,7 @@ paths:
       summary: MemoSummary 기반 대화 세션 시작
       description: |
         대화는 Memo가 아니라 하나 이상의 MemoSummary 선택으로 시작한다.
+        이미 대화에 사용되어 chatAvailable=false인 MemoSummary는 선택할 수 없다.
         세션 시작 시 실록이의 첫 질문을 conversation에 추가한다.
       operationId: createDailyChatSession
       requestBody:
@@ -318,6 +319,8 @@ paths:
         "404":
           $ref: "#/components/responses/Error"
         "409":
+          $ref: "#/components/responses/Error"
+        "422":
           $ref: "#/components/responses/Error"
 
   /api/daily-chat-sessions/{sessionId}:
@@ -343,7 +346,7 @@ paths:
     post:
       tags: [dailyChatSessions]
       summary: 사용자 답변 저장 및 다음 질문 반환
-      description: 사용자 답변을 conversation에 추가하고, 다음 역질문 또는 마무리 멘트까지 반영된 세션을 반환한다.
+      description: 사용자 답변을 conversation에 추가하고, 다음 역질문 또는 마무리 멘트까지 반영된 세션을 반환한다. 이미 ENDED 상태인 세션에는 답변을 추가할 수 없다.
       operationId: submitDailyChatAnswer
       parameters:
         - $ref: "#/components/parameters/SessionId"
@@ -373,7 +376,7 @@ paths:
     post:
       tags: [dailyChatSessions]
       summary: 대화 세션 종료
-      description: 사용자가 대화를 직접 종료한다. 마무리 멘트를 conversation에 추가하고 closingMessage로 저장한다.
+      description: 사용자가 대화를 직접 종료한다. 중간에 끝내더라도 세션은 완전히 종료된 ENDED 상태가 되며 다시 이어서 대화하지 않는다. 마무리 멘트를 conversation에 추가하고 closingMessage로 저장한다.
       operationId: endDailyChatSession
       parameters:
         - $ref: "#/components/parameters/SessionId"
@@ -814,9 +817,13 @@ components:
           items:
             $ref: "#/components/schemas/MemoSummary"
 
+    MemoSummaryChatDisabledReason:
+      type: string
+      enum: [ALREADY_CHATTED]
+
     MemoSummary:
       type: object
-      required: [id, categoryName, summary, itemCount, items, createdAt]
+      required: [id, categoryName, summary, itemCount, items, chatAvailable, createdAt]
       properties:
         id:
           type: integer
@@ -832,6 +839,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MemoSummaryItem"
+        chatAvailable:
+          type: boolean
+          description: 대화 시작 시 선택 가능한지 여부. 이미 대화에 사용되면 false.
+        chatDisabledReason:
+          oneOf:
+            - $ref: "#/components/schemas/MemoSummaryChatDisabledReason"
+            - type: "null"
+          description: chatAvailable=false인 경우 비활성화 사유.
         createdAt:
           type: string
           format: date-time

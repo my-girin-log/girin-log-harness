@@ -52,11 +52,13 @@ AI가 Memo 전체를 분석해 내용 단위로 분할하고 카테고리별로 
 MemoSummary로 합쳐질 수 있다.
 
 MVP에서 MemoSummary는 조회만 가능하며 수정/삭제하지 않는다.
+이미 대화에 사용된 MemoSummary는 비활성화 상태로 표시하며 재선택하지 않는다.
 
 ### `daily-chat-sessions.md`
 
 하나 이상의 MemoSummary를 선택해 시작한 DailyChatSession과, 그 안에서 오간 전체
 대화 원문(`conversation`)을 저장한다. 별도 메시지 엔티티 없이 세션 하나에 전체 대화를 담는다.
+사용자가 중간에 끝내기를 누르면 해당 세션은 완전히 종료된 상태로 취급하며 다시 이어서 대화하지 않는다.
 
 예시:
 

@@ -13,7 +13,7 @@
 | 2026-06-06 | Export 서버 API는 MVP에서 만들지 않는다. | Markdown 복사/다운로드는 FE에서 처리할 수 있기 때문. | API 목록, FE 기능 요구사항 |
 | 2026-06-06 | EventLog는 MVP에서 얇은 append-only 로그로 실제 저장한다. | 사용자 행동 기반 MVP 검증 지표를 초기부터 수집하기 위해서. | DB 모델, 이벤트 저장 로직 |
 | 2026-06-06 | 백엔드 기본 DB는 PostgreSQL 우선으로 둔다. | 관계형 데이터와 긴 텍스트, 유연한 JSON 메타데이터를 함께 다루기 좋기 때문. | 백엔드 인프라, JPA 매핑, Testcontainers |
-| 2026-06-09 | **MemoSummary에 상태/큐(PENDING/USED/EXPIRED)를 두지 않는다.** 조회 전용·무상태로 두고, "오늘 목록"은 `serviceDate`로 필터링한다. 대화에 써도 제외하지 않고 여러 세션이 재사용한다. | `MemoSummary N──N DailyChatSession` 재사용 모델과 상태 큐가 충돌하고, 상태머신은 06:00 전환·동시성 부담을 키우기 때문. | `MemoSummary`, `conventions/api.md`, `domain/data-model.md` |
+| 2026-06-09 | **MemoSummary는 한 번 대화에 사용되면 비활성화하고 재선택을 금지한다.** 별도 수정/삭제 API는 두지 않으며, 목록 응답에서 대화 가능 여부를 내려준다. | 사용자가 이미 대화한 카테고리를 다시 선택하면 같은 맥락의 대화가 중복되고 Diary/Retrospective 입력이 흐려지기 때문. | `MemoSummary`, `DailyChatSession`, `api/openapi.yaml`, `conventions/api.md`, `domain/data-model.md` |
 | 2026-06-09 | **Memo 요약은 전체성공/전체실패(원자적).** 실패 시 Memo는 `DRAFT` 유지. 대상 DRAFT가 없으면 `422`(`NO_SUMMARIZABLE_MEMO`). | 부분 성공은 FE UX와 상태 추론을 복잡하게 만들고, 형식은 맞고 규칙 위반인 케이스는 422가 맞기 때문. | `api/openapi.yaml`(요약 422), `conventions/api.md` |
 | 2026-06-09 | **MemoSummaryItem.memoId를 API 응답에서 제외**(서버 내부 추적용으로만 유지). | 프론트는 원본 Memo 연결이 필요 없고, 응답은 노출 최소값(id·categoryName·itemCount·items.content)으로 충분하기 때문. | `api/openapi.yaml`(MemoSummaryItem), `domain/data-model.md` |
 | 2026-06-09 | **06:00 KST에 OPEN 세션을 자동 종료**한다(`endedReason=SYSTEM_ENDED` 신설). DRAFT Memo는 `ARCHIVED` 전환. | Diary 입력(전날 ENDED 세션)을 확정적으로 만들고 미처리 데이터의 상태를 명확히 하기 위해서. | `EndedReason` enum, `conventions/api.md`, `domain/data-model.md`, 배치/스케줄러 |

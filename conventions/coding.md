@@ -135,7 +135,8 @@ src/
 - **시각:** 일자 계산은 반드시 공통 KST 유틸을 통한다. 곳곳에서 `LocalDate.now()`를 타임존 없이 쓰지 않는다. 테스트 가능하도록 `Clock`을 주입한다.
 - **시각 경계:** 이 서비스의 "하루"는 **06:00 KST**다. Diary 자동 생성·"오늘의 메모"·기간 선택 모두 이 경계를 공유한다(`conventions/api.md`).
 - **도메인 정책은 도메인 객체 안에.** "역질문은 10회까지", "Diary는 하루 1개", "일자 경계는 06:00 KST" 같은 규칙이 컨트롤러/서비스 곳곳에 흩어지지 않게 한다.
-- **상태 enum은 glossary 고정값만.** `MemoStatus`(`DRAFT`/`SUMMARIZED`/`ARCHIVED`), `endedReason`(`USER_ENDED`/`MAX_FOLLOWUP`/`AI_DECIDED`) 등에 임의 값을 추가하지 않는다.
+- **상태 enum은 glossary 고정값만.** `MemoStatus`(`DRAFT`/`SUMMARIZED`/`ARCHIVED`), `endedReason`(`USER_ENDED`/`MAX_FOLLOWUP`/`AI_DECIDED`/`SYSTEM_ENDED`) 등에 임의 값을 추가하지 않는다.
+- **MemoSummary 재선택 금지.** 이미 대화에 사용된 MemoSummary는 선택 가능 여부를 `chatAvailable=false`로 표현하고, 새 DailyChatSession 생성 입력으로 들어오면 도메인 규칙 위반으로 거부한다.
 - **저장 경계:** 도메인은 DB를 직접 알지 않는다. Repository 인터페이스로 감싸고, Repository는 Service 계층 안에서만 다룬다(`conventions/persistence.md`).
 - **AI 금지 작업:** AI는 사용자 승인 없이 DB 스키마 변경, 인증/인가 정책 변경, OpenAPI 변경, 도메인 정책 변경, 운영 설정 변경을 하지 않는다.
 
