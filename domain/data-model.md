@@ -50,11 +50,13 @@ Persona 생성을 위한 원천 입력. 블로그 링크, 기존 글 원문, 설
 ## Persona
 
 사용자의 말투, 사고 흐름, 관심사, 정리 습관, 회고 기준을 요약한 정보.
-Retrospective 생성 시 "사용자다움"의 근거가 된다. 회고 생성에는 누적된 `persona.md`
-표현을 사용한다.
+Retrospective 생성 시 "사용자다움"의 근거가 된다. 회고 생성에는 사용자 기록을 바탕으로
+주기적으로 갱신되는 `persona.md` 표현을 사용한다.
 
 블로그 링크 분석 결과, 기존 글 원문, 온보딩 설문 응답을 함께 사용하되 일부 입력만 있어도
-Persona를 생성할 수 있어야 한다.
+Persona를 생성할 수 있어야 한다. 초기 Persona는 온보딩 기반으로 만들고, 이후 기록이
+쌓이면 사용자 맞춤 기준이 변할 수 있도록 내부 작업으로 갱신한다. 갱신 주기는 매일로
+고정하지 않는다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
@@ -68,6 +70,7 @@ Persona를 생성할 수 있어야 한다.
 | `preferredStructure` | 선호 글 구조 | |
 | `summary` | 회고 생성용 요약 Persona | |
 | `markdown` | `persona.md` 표현 | Retrospective 생성 입력 |
+| `lastRefreshedAt` | 마지막 갱신 시각 | 주기적 갱신 기준 |
 | `createdAt` | 생성 시각 | |
 | `updatedAt` | 수정 시각 | |
 
@@ -197,8 +200,9 @@ followUpCount: 2
 
 ## Retrospective
 
-선택 기간의 DailyChatSession 전체 대화 원문 + 원본 `Memo` + `MemoSummary` + `persona.md`를
-기반으로 생성한 완성형 회고 글. Diary는 Retrospective 생성의 직접 입력이 아니다. (2026-06-09 결정)
+선택 기간의 DailyChatSession 전체 대화 원문과 `persona.md`를 기반으로 생성한 완성형
+회고 글. 원본 Memo, MemoSummary, Diary는 Retrospective 생성의 직접 입력이 아니다.
+(2026-06-09 결정)
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |

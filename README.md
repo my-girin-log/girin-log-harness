@@ -168,16 +168,17 @@ erDiagram
     User ||--o{ Memo : "하루 여러 개"
     Memo ||--o{ MemoSummary : "요약 생성"
     MemoSummary }o--o{ DailyChatSession : "선택해 세션 시작"
-    DailyChatSession ||--o{ ChatMessage : "전체 대화 원문"
+    DailyChatSession }o--o{ Retrospective : "기간 내 대화 원문"
+    Persona ||--o{ Retrospective : "persona.md"
     User ||--o{ Diary : "보유"
     User ||--o{ Retrospective : "기간 선택"
     User ||--o{ EventLog : "행동 이벤트"
-    Diary }o--o{ Retrospective : "참조"
     Memo {
         string status "DRAFT-SUMMARIZED-ARCHIVED"
     }
     DailyChatSession {
         string status "OPEN-ENDED"
+        string conversation "전체 대화 원문"
         int followUpCount "최대 10"
         string endedReason "종료 사유"
     }
@@ -199,13 +200,16 @@ flowchart LR
     S --> Q["실록이 역질문<br/>(최대 10회)"]
     Q --> E["'끝내기'<br/>→ 세션 종료"]
     E ==>|"06:00 KST"| D["Diary 1개 자동 생성<br/>+ 작업 공간 초기화"]
-    D --> R["기간 선택<br/>→ Retrospective 생성"]
+    E --> R["기간 선택<br/>→ DailyChatSession 원문 + persona.md로 Retrospective 생성"]
 ```
 
 - Memo는 **하루 여러 개**, 세션도 **하루 여러 개**, 하지만 **Diary는 하루 1개**.
 - 대화는 Memo가 아니라 **하나 이상의 MemoSummary 선택**으로 시작한다.
+- 전체 대화 원문은 별도 `ChatMessage` 없이 **DailyChatSession의 `conversation`** 에 저장한다.
 - 역질문은 **최대 10회**(프롬프트로 강제), '끝내기' 버튼/AI 판단으로 종료.
 - **06:00 KST**: Diary 자동 생성 + 일일 작업 공간 초기화.
+- Retrospective는 **선택 기간의 DailyChatSession 원문 + persona.md** 로 생성한다. Diary는 직접 입력이 아니다.
+- `persona.md`는 온보딩으로 시작하고, 이후 사용자 기록을 바탕으로 주기적으로 갱신된다.
 
 ---
 

@@ -30,7 +30,7 @@
 | BE-B | 기록(Memo/MemoSummary/DailyChatSession), Diary, Retrospective, EventLog |
 | 공유 | 실록이 LLM 연동 모듈, 공통 에러/응답, KST 시각 유틸 |
 
-나눈 기준: **BE-A는 "사용자 정체성·말투"**(Persona가 Retrospective의 근거), **BE-B는 "일일 기록 → Diary → Retrospective 파이프라인"**. 둘의 접점은 Retrospective가 Persona(`persona.md`)를 읽는 지점 하나로 좁힌다.
+나눈 기준: **BE-A는 "사용자 정체성·말투"**(Persona가 Retrospective의 근거), **BE-B는 "MemoSummary 기반 대화 → Diary/Retrospective 파이프라인"**. 둘의 접점은 Retrospective가 Persona(`persona.md`)를 읽는 지점 하나로 좁힌다.
 
 경계가 닿는 부분(실록이 호출, 공통 에러 포맷, 06:00 KST 유틸, Persona 조회)은 **먼저 인터페이스만 합의**하고 각자 구현한다.
 

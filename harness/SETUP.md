@@ -33,9 +33,9 @@ girin-codex (이 레포, SSOT)
 | 이벤트 | 매처 | 동작 | 효과 |
 | --- | --- | --- | --- |
 | PostToolUse | `Edit\|Write` | `format-and-lint.sh` | 편집한 파일 자동 포맷·린트 |
-| PostToolUse | (해당 시) | `check-spec-drift.sh` | 응답/타입이 openapi.yaml과 어긋나면 exit 2로 에이전트에 피드백 → 자가 수정 |
+| PostToolUse | (해당 시) | `check-spec-drift.sh` | 최소 구현은 openapi.yaml 유효성 검사. BE/FE 레포에서 응답/타입 드리프트 검사로 확장 |
 | Stop | — | 테스트/빌드 | 그린 아닐 때 "완료" 차단 |
-| PreToolUse | `Bash` | (선택) main 직접 커밋 차단 | 보호 브랜치 사고 방지 |
+| PreToolUse | `Bash` | (선택) 보호 브랜치 Bash 차단 | 최소 구현은 보호 브랜치에서 Bash 전체를 막는다. 필요하면 git commit/push만 차단하도록 확장 |
 
 - 종료 코드 0 = 통과, 2 = 차단(PreToolUse는 재고 유도, PostToolUse는 에이전트에 에러 전달).
 - 이 레포(girin-codex) 자체는 `../.claude/settings.json`에서 openapi 유효성만 가볍게 건다.
