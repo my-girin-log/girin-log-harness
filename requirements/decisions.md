@@ -21,14 +21,7 @@
 | 2026-06-09 | **세션 시작 시 선택 MemoSummary 내용을 snapshot으로 저장**(`selectedSummariesSnapshot`, jsonb). | 원본 상태/내용 변화와 무관하게 대화 기록의 맥락을 보존하기 위해서. | `domain/data-model.md`, 영속성 |
 | 2026-06-09 | **ConversationTurn에 `createdAt`(선택) 추가, `sequence`는 두지 않는다.** | 순서는 배열 순서가 계약이므로 sequence는 중복이고, 시간 표시 대비 createdAt만 선택 제공하면 충분하기 때문. | `api/openapi.yaml`(ConversationTurn) |
 | 2026-06-09 | **Diary는 대화가 있는 날만 생성**(빈 Diary 금지, 없는 날 404). 재생성은 **멱등**. | 날짜당 1개 unique 제약과 배치 재실행 안전성을 위해서. | `conventions/api.md`, Diary 생성 배치 |
-
-## 미확정 — 다음 논의 필요 (2026-06-09 제기, 백엔드 추천 포함)
-
-아래는 PR로 함께 올렸으나 **계약을 아직 바꾸지 않은** 항목이다. 팀 합의 후 별도 변경으로 반영한다.
-
-| 항목 | 쟁점 | 백엔드 추천 |
-| --- | --- | --- |
-| 회고 생성 자료 범위 | 동료 제안 "Memo 포함"이 **확정 결정(2026-06-08: conversation+persona.md만, Memo·Diary 직접 입력 아님)** 과 충돌. | 현 결정 유지(conversation 전체 + persona.md). 기간 기준은 `serviceDate`. Memo 포함을 원하면 별도 결정으로 변경. |
-| 달력용 경량 API | `GET /api/diaries`(full Diary)만으로 달력(날짜 목록)에 과한 본문 전송. | 날짜만 주는 경량 엔드포인트(예: `GET /api/diaries/dates`) 추가. Diary 없는 날은 404 유지. |
-| Persona.md 갱신 정책 | 매일 06:00 갱신은 비용/복잡도 큼. | MVP는 온보딩 1회 생성으로 한정(매일 갱신 제외). 회고 시 persona 없거나 오래돼도 graceful(차단 X). 노출용/내부 markdown은 이미 분리됨. |
-| 스트릭 기준 | Pet/스트릭은 대부분 MVP 제외이나 표시 시 기준 필요. | MVP 보류 권장. 필요 시 `EventLog.CHAT_SESSION_STARTED`로 파생(serviceDate 1일 1회), 스키마 추가 불요. |
+| 2026-06-09 | **회고 생성 입력은 선택 기간의 `DailyChatSession.conversation` + `persona.md`로 고정**한다. 원본 Memo·MemoSummary·Diary는 회고 입력에 넣지 않는다. 기간 기준은 `serviceDate`. | conversation에 이미 회고에 필요한 정제된 내용(질문·답변)이 담겨 있어 원본 Memo는 노이즈·비용만 키우기 때문. 2026-06-08 결정과 일관. (프론트 가정 "Memo 포함"을 본 결정으로 정리) | `requirements/product.md`, `conventions/api.md`, Retrospective 생성 |
+| 2026-06-09 | **달력용 경량 엔드포인트 `GET /api/diaries/calendar`를 추가**한다(Diary 있는 `serviceDate` 목록만, 본문 제외). 없는 날짜는 `404` 유지. | full Diary 목록을 달력에 쓰면 본문까지 과하게 전송되기 때문. | `api/openapi.yaml`(diaries calendar), FE 달력 |
+| 2026-06-09 | **Persona는 온보딩 1회 생성으로 한정**(매일/주기 자동 갱신은 MVP 제외). 회고 생성 시 persona가 없거나 오래돼도 **차단하지 않고 graceful**하게 진행한다. 노출용 Persona와 내부 `markdown`(persona.md)은 이미 분리돼 있어 유지. | 매일 갱신은 비용·복잡도가 크고 MVP 검증 가치가 낮으며, persona는 회고의 보강 신호이지 필수 차단 요소가 아니기 때문. | `requirements/product.md`, Persona 생성, Retrospective 생성 |
+| 2026-06-09 | **스트릭은 MVP에서 별도 API/스키마로 두지 않는다.** 필요 시 `EventLog.CHAT_SESSION_STARTED`에서 파생(같은 `serviceDate`는 1일 1회). | Pet/스트릭은 MVP 제외 도메인이고, 표시가 필요해지면 이미 쌓는 EventLog로 충분히 계산되기 때문. | `domain/data-model.md`(EventLog), (스키마 변경 없음) |

@@ -130,6 +130,18 @@ GET /api/v1/diaries?cursor=<opaque>&limit=20
 - MemoSummary 생성·Diary 자동 생성도 같은 동기 방식을 따른다.
 - 추후 LLM 지연이 사용자 경험을 해치면 그때 비동기(`202`+폴링)로 전환을 검토한다(기획안 13절: LLM 비용/호출 구조 분리와 연결).
 
+**Retrospective 생성 입력 (2026-06-09 결정)**
+- 입력은 **선택 기간의 `DailyChatSession.conversation` + `persona.md`로 고정**한다. 원본 Memo·MemoSummary·Diary는 회고 입력에 넣지 않는다. 기간 기준은 `serviceDate`.
+- `persona.md`가 없거나 오래돼도 **차단하지 않고 graceful**하게 생성한다(persona는 보강 신호이지 필수 차단 요소가 아니다).
+
+**Persona 갱신 (2026-06-09 결정)**
+- Persona는 **온보딩 1회 생성**으로 한정한다. 매일/주기 자동 갱신은 MVP 범위가 아니다. 노출용 Persona와 내부 `markdown`(persona.md)은 분리 유지한다.
+
+## 7-1. Diary 달력 조회 (2026-06-09 결정)
+
+- 마이페이지 달력은 본문 없이 **Diary가 있는 날짜만** 필요하므로 경량 엔드포인트 `GET /api/diaries/calendar`(serviceDate 목록)를 쓴다. full `GET /api/diaries`를 달력에 쓰지 않는다.
+- 특정 날짜 상세는 `GET /api/diaries/{date}`. Diary 없는 날짜는 `404`(FE가 "생성 전" 안내). `Diary.markdown`은 사용자 노출용 최종 본문이므로 그대로 렌더링한다.
+
 ## 8. 명세 작성 규칙
 
 - 새 엔드포인트는 반드시 `api/openapi.yaml`에 **먼저** 정의하고, 그 다음 구현한다.
