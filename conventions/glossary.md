@@ -42,6 +42,6 @@
 - `DailyChatSession`은 **하나의 `serviceDate`에만 속한다**(생성 시점 06:00 경계 기준). 서로 다른 날짜의 `MemoSummary`를 한 세션에 섞지 않는다.
 - "전체 대화를 저장한다" = `DailyChatSession`의 `conversation` 필드에 실록이 질문·사용자 답변·마무리 멘트를 순서가 드러나게 저장한다(별도 메시지 엔티티 없음).
 - "정리한다" = 전날 `DailyChatSession`들 → `Diary` 변환(06:00 KST 자동). 원본 `Memo`·`MemoSummary`는 Diary 생성의 직접 입력이 아니다.
-- "회고를 생성한다" = 선택 기간의 `DailyChatSession` 전체 대화 원문 + `persona.md`로 `Retrospective` 생성. 원본 `Memo`, `MemoSummary`, `Diary`는 직접 입력이 아니다.
+- "회고를 생성한다" = 선택 기간의 `DailyChatSession` 전체 대화 원문 + 원본 `Memo` + `MemoSummary` + `persona.md`로 `Retrospective` 생성. `Diary`는 직접 입력이 아니다.
 - 일자 경계는 항상 **06:00 KST**. "오늘"의 정의가 자정이 아님에 주의(`conventions/api.md`).
 - Markdown 복사/다운로드는 별도 서버 API가 아니라 FE 기능이다.

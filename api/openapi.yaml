@@ -505,10 +505,10 @@ paths:
           $ref: "#/components/responses/Error"
     post:
       tags: [retrospectives]
-      summary: 기간 내 DailyChatSession 원문과 persona.md 기반 Retrospective 생성
+      summary: 기간 내 DailyChatSession 원문·원본 Memo·MemoSummary·persona.md 기반 Retrospective 생성
       description: |
-        선택 기간(serviceDate)의 DailyChatSession 전체 대화 원문과 persona.md를 입력으로 회고를 생성한다.
-        원본 Memo, MemoSummary, Diary는 직접 입력이 아니다. persona.md가 없거나 오래돼도 graceful하게 생성한다.
+        선택 기간(serviceDate)의 DailyChatSession 전체 대화 원문 + 원본 Memo + MemoSummary + persona.md를
+        입력으로 회고를 생성한다. Diary는 직접 입력이 아니다. persona.md가 없거나 오래돼도 graceful하게 생성한다.
       operationId: createRetrospective
       requestBody:
         required: true

@@ -200,9 +200,9 @@ followUpCount: 2
 
 ## Retrospective
 
-선택 기간의 DailyChatSession 전체 대화 원문과 `persona.md`를 기반으로 생성한 완성형
-회고 글. 원본 Memo, MemoSummary, Diary는 Retrospective 생성의 직접 입력이 아니다.
-(2026-06-09 결정)
+선택 기간의 DailyChatSession 전체 대화 원문 + 원본 `Memo` + `MemoSummary` + `persona.md`를
+기반으로 생성한 완성형 회고 글. Diary는 Retrospective 생성의 직접 입력이 아니다.
+(2026-06-09 결정, FE 합의로 Memo·MemoSummary 포함)
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
