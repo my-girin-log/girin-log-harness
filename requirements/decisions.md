@@ -13,3 +13,22 @@
 | 2026-06-06 | Export 서버 API는 MVP에서 만들지 않는다. | Markdown 복사/다운로드는 FE에서 처리할 수 있기 때문. | API 목록, FE 기능 요구사항 |
 | 2026-06-06 | EventLog는 MVP에서 얇은 append-only 로그로 실제 저장한다. | 사용자 행동 기반 MVP 검증 지표를 초기부터 수집하기 위해서. | DB 모델, 이벤트 저장 로직 |
 | 2026-06-06 | 백엔드 기본 DB는 PostgreSQL 우선으로 둔다. | 관계형 데이터와 긴 텍스트, 유연한 JSON 메타데이터를 함께 다루기 좋기 때문. | 백엔드 인프라, JPA 매핑, Testcontainers |
+| 2026-06-09 | **MemoSummary에 상태/큐(PENDING/USED/EXPIRED)를 두지 않는다.** 조회 전용·무상태로 두고, "오늘 목록"은 `serviceDate`로 필터링한다. 대화에 써도 제외하지 않고 여러 세션이 재사용한다. | `MemoSummary N──N DailyChatSession` 재사용 모델과 상태 큐가 충돌하고, 상태머신은 06:00 전환·동시성 부담을 키우기 때문. | `MemoSummary`, `conventions/api.md`, `domain/data-model.md` |
+| 2026-06-09 | **Memo 요약은 전체성공/전체실패(원자적).** 실패 시 Memo는 `DRAFT` 유지. 대상 DRAFT가 없으면 `422`(`NO_SUMMARIZABLE_MEMO`). | 부분 성공은 FE UX와 상태 추론을 복잡하게 만들고, 형식은 맞고 규칙 위반인 케이스는 422가 맞기 때문. | `api/openapi.yaml`(요약 422), `conventions/api.md` |
+| 2026-06-09 | **MemoSummaryItem.memoId를 API 응답에서 제외**(서버 내부 추적용으로만 유지). | 프론트는 원본 Memo 연결이 필요 없고, 응답은 노출 최소값(id·categoryName·itemCount·items.content)으로 충분하기 때문. | `api/openapi.yaml`(MemoSummaryItem), `domain/data-model.md` |
+| 2026-06-09 | **06:00 KST에 OPEN 세션을 자동 종료**한다(`endedReason=SYSTEM_ENDED` 신설). DRAFT Memo는 `ARCHIVED` 전환. | Diary 입력(전날 ENDED 세션)을 확정적으로 만들고 미처리 데이터의 상태를 명확히 하기 위해서. | `EndedReason` enum, `conventions/api.md`, `domain/data-model.md`, 배치/스케줄러 |
+| 2026-06-09 | **DailyChatSession은 하나의 `serviceDate`에만 속한다**(생성 시점 기준). 다른 날짜 MemoSummary 혼합 금지(`422`). | Diary 날짜별 집계를 단순·명확하게 하기 위해서. | `conventions/api.md`, `domain/data-model.md` |
+| 2026-06-09 | **세션 시작 시 선택 MemoSummary 내용을 snapshot으로 저장**(`selectedSummariesSnapshot`, jsonb). | 원본 상태/내용 변화와 무관하게 대화 기록의 맥락을 보존하기 위해서. | `domain/data-model.md`, 영속성 |
+| 2026-06-09 | **ConversationTurn에 `createdAt`(선택) 추가, `sequence`는 두지 않는다.** | 순서는 배열 순서가 계약이므로 sequence는 중복이고, 시간 표시 대비 createdAt만 선택 제공하면 충분하기 때문. | `api/openapi.yaml`(ConversationTurn) |
+| 2026-06-09 | **Diary는 대화가 있는 날만 생성**(빈 Diary 금지, 없는 날 404). 재생성은 **멱등**. | 날짜당 1개 unique 제약과 배치 재실행 안전성을 위해서. | `conventions/api.md`, Diary 생성 배치 |
+
+## 미확정 — 다음 논의 필요 (2026-06-09 제기, 백엔드 추천 포함)
+
+아래는 PR로 함께 올렸으나 **계약을 아직 바꾸지 않은** 항목이다. 팀 합의 후 별도 변경으로 반영한다.
+
+| 항목 | 쟁점 | 백엔드 추천 |
+| --- | --- | --- |
+| 회고 생성 자료 범위 | 동료 제안 "Memo 포함"이 **확정 결정(2026-06-08: conversation+persona.md만, Memo·Diary 직접 입력 아님)** 과 충돌. | 현 결정 유지(conversation 전체 + persona.md). 기간 기준은 `serviceDate`. Memo 포함을 원하면 별도 결정으로 변경. |
+| 달력용 경량 API | `GET /api/diaries`(full Diary)만으로 달력(날짜 목록)에 과한 본문 전송. | 날짜만 주는 경량 엔드포인트(예: `GET /api/diaries/dates`) 추가. Diary 없는 날은 404 유지. |
+| Persona.md 갱신 정책 | 매일 06:00 갱신은 비용/복잡도 큼. | MVP는 온보딩 1회 생성으로 한정(매일 갱신 제외). 회고 시 persona 없거나 오래돼도 graceful(차단 X). 노출용/내부 markdown은 이미 분리됨. |
+| 스트릭 기준 | Pet/스트릭은 대부분 MVP 제외이나 표시 시 기준 필요. | MVP 보류 권장. 필요 시 `EventLog.CHAT_SESSION_STARTED`로 파생(serviceDate 1일 1회), 스키마 추가 불요. |

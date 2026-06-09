@@ -294,6 +294,9 @@ paths:
           $ref: "#/components/responses/Error"
         "409":
           $ref: "#/components/responses/Error"
+        "422":
+          # 요약할 DRAFT Memo가 없음(code=NO_SUMMARIZABLE_MEMO). 전체성공/전체실패, 실패 시 Memo는 DRAFT 유지. (conventions/api.md 2-1)
+          $ref: "#/components/responses/Error"
         "500":
           $ref: "#/components/responses/Error"
 
@@ -863,12 +866,11 @@ components:
 
     MemoSummaryItem:
       type: object
-      required: [id, memoId, content]
+      # memoId(원본 Memo 연결)는 응답에서 제외한다. 프론트는 원본 연결이 필요 없고,
+      # 추적은 서버 내부에서만 한다. (conventions/api.md 5-1, decisions 2026-06-09)
+      required: [id, content]
       properties:
         id:
-          type: integer
-          format: int64
-        memoId:
           type: integer
           format: int64
         content:
@@ -884,8 +886,10 @@ components:
 
     EndedReason:
       type: string
-      description: 세션 종료 사유. 진행 중인 세션에는 없다.
-      enum: [USER_ENDED, MAX_FOLLOWUP, AI_DECIDED]
+      description: |
+        세션 종료 사유. 진행 중인 세션에는 없다.
+        SYSTEM_ENDED: 06:00 KST 경계에서 OPEN 세션을 시스템이 자동 종료.
+      enum: [USER_ENDED, MAX_FOLLOWUP, AI_DECIDED, SYSTEM_ENDED]
 
     CreateDailyChatSessionRequest:
       type: object
@@ -900,13 +904,19 @@ components:
 
     ConversationTurn:
       type: object
-      description: 대화 원문의 한 발화. 별도 엔티티가 아니라 세션 conversation의 한 줄이다.
+      description: |
+        대화 원문의 한 발화. 별도 엔티티가 아니라 세션 conversation의 한 줄이다.
+        순서는 배열 순서로 보장한다(별도 sequence 필드를 두지 않는다).
       required: [role, content]
       properties:
         role:
           $ref: "#/components/schemas/ConversationRole"
         content:
           type: string
+        createdAt:
+          type: ["string", "null"]
+          format: date-time
+          description: 발화 시각(선택). UI 시간 표시용. 순서 기준은 아니다.
 
     DailyChatSession:
       type: object
