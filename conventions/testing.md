@@ -92,6 +92,8 @@
 - **Memo 상태 전이** — `DRAFT → SUMMARIZED`(요약 시), 06:00 KST 이후 `ARCHIVED`. 정의되지 않은 전이는 거부된다.
 - **Persona 부분 입력 생성** — 블로그/원문/설문 중 일부만 있어도 Persona가 생성된다.
 - **MemoSummary 불변** — MVP에서 수정/삭제 경로가 없다(엔드포인트 부재 또는 거부).
+- **MemoSummary 재선택 금지** — 이미 DailyChatSession에 사용된 MemoSummary는 `chatAvailable=false`로 조회되고, 다시 세션 시작에 사용하면 `422`로 거부된다.
+- **사용자 종료는 완전 종료** — 사용자가 중간에 끝낸 세션은 `status=ENDED`, `endedReason=USER_ENDED`가 되며 이후 답변 제출로 이어서 대화할 수 없다.
 - **작업 공간 초기화는 보관** — 06:00 초기화 후에도 이전 데이터가 삭제되지 않고 조회·Diary 생성에 쓰인다.
 
 ## 7. 명세 준수 테스트

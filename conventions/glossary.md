@@ -13,6 +13,7 @@
 | 메모 (작업 메모장) | `Memo` | 엔티티/필드 | `Note`, `Record`(혼용 금지) |
 | 메모 요약 | `MemoSummary` | 엔티티/필드 | `Summary`, `MemoCategory` |
 | 메모 요약 항목 | `MemoSummaryItem` | 응답 필드 | `Summary`(단독) — 카테고리 묶음의 한 항목 |
+| 메모 요약 대화 가능 여부 | `chatAvailable` / `chatDisabledReason` | 필드 | `status`(MemoSummary 상태로 오해 가능) |
 | 메모 상태 | `MemoStatus` | enum | `DRAFT`/`SUMMARIZED`/`ARCHIVED` 외 임의 추가 금지 |
 | 역질문 (실록이의 되묻기) | `followUpQuestion` | 필드 | `question`(단독은 모호) |
 | 역질문 횟수/상한 | `followUpCount` / `maxFollowUpCount` | 필드 | — (상한 기본 10) |
@@ -38,7 +39,7 @@
 - "회고를 만든다" = `Retrospective`를 **생성(generate)** 한다. "Diary를 만든다"와 구분.
 - "메모를 요약한다" = `Memo` → `MemoSummary` 생성.
 - "대화를 시작한다" = 하나 이상의 `MemoSummary`를 선택해 `DailyChatSession`을 생성.
-- `MemoSummary`는 **상태(status)가 없다.** 조회 전용이며 "선택"은 세션이 들고 있는 일시적 행위다. "오늘 목록"은 상태가 아니라 `serviceDate`로 필터링한다(`PENDING`/`USED`/`EXPIRED` 같은 큐 상태를 두지 않는다).
+- `MemoSummary`는 수정/삭제하지 않지만, 이미 대화에 사용된 항목은 `chatAvailable=false`로 비활성화하고 재선택을 금지한다.
 - `DailyChatSession`은 **하나의 `serviceDate`에만 속한다**(생성 시점 06:00 경계 기준). 서로 다른 날짜의 `MemoSummary`를 한 세션에 섞지 않는다.
 - "전체 대화를 저장한다" = `DailyChatSession`의 `conversation` 필드에 실록이 질문·사용자 답변·마무리 멘트를 순서가 드러나게 저장한다(별도 메시지 엔티티 없음).
 - "정리한다" = 전날 `DailyChatSession`들 → `Diary` 변환(06:00 KST 자동). 원본 `Memo`·`MemoSummary`는 Diary 생성의 직접 입력이 아니다.

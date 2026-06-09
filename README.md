@@ -167,7 +167,7 @@ erDiagram
     User ||--|| Persona : "온보딩 설문으로 생성"
     User ||--o{ Memo : "하루 여러 개"
     Memo ||--o{ MemoSummary : "요약 생성"
-    MemoSummary }o--o{ DailyChatSession : "선택해 세션 시작"
+    MemoSummary }o--o| DailyChatSession : "대화 시작"
     DailyChatSession }o--o{ Retrospective : "기간 내 대화 원문"
     Persona ||--o{ Retrospective : "persona.md"
     User ||--o{ Diary : "보유"
@@ -175,6 +175,9 @@ erDiagram
     User ||--o{ EventLog : "행동 이벤트"
     Memo {
         string status "DRAFT-SUMMARIZED-ARCHIVED"
+    }
+    MemoSummary {
+        boolean chatAvailable "대화 가능 여부"
     }
     DailyChatSession {
         string status "OPEN-ENDED"
@@ -205,8 +208,9 @@ flowchart LR
 
 - Memo는 **하루 여러 개**, 세션도 **하루 여러 개**, 하지만 **Diary는 하루 1개**.
 - 대화는 Memo가 아니라 **하나 이상의 MemoSummary 선택**으로 시작한다.
+- 이미 대화한 MemoSummary는 비활성화되며 재선택할 수 없다.
 - 전체 대화 원문은 별도 `ChatMessage` 없이 **DailyChatSession의 `conversation`** 에 저장한다.
-- 역질문은 **최대 10회**(프롬프트로 강제), '끝내기' 버튼/AI 판단으로 종료.
+- 역질문은 **최대 10회**(프롬프트로 강제), '끝내기' 버튼/AI 판단으로 종료. 사용자가 중간에 끝낸 세션도 완전히 종료된 상태로 취급한다.
 - **06:00 KST**: Diary 자동 생성 + 일일 작업 공간 초기화.
 - Retrospective는 **선택 기간의 DailyChatSession 원문 + persona.md** 로 생성한다. Diary는 직접 입력이 아니다.
 - `persona.md`는 온보딩으로 시작하고, 이후 사용자 기록을 바탕으로 주기적으로 갱신된다.

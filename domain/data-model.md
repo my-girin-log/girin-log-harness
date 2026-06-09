@@ -102,9 +102,8 @@ Memo 전체 내용을 AI가 읽고 **카테고리별로 재구성한 요약본**
 여러 원본 Memo 조각을 묶을 수 있고, 각 조각은 `MemoSummaryItem`으로 표현된다.
 MVP에서는 조회만 가능하며 수정/삭제하지 않는다.
 
-**상태(status)를 두지 않는다.** 조회 전용이고, 대화 "선택"은 세션이 들고 있는 일시적 행위다.
-`PENDING`/`USED`/`EXPIRED` 같은 큐 상태를 도입하지 않는다(2026-06-09 결정). "오늘 목록"은
-`serviceDate` 필터로 처리하고, 한 MemoSummary는 여러 세션이 재사용할 수 있다(`N──N`).
+이미 대화에 사용된 MemoSummary는 비활성화 상태로 표시하고 재선택할 수 없다. 목록 조회에서는
+프론트가 카테고리 선택 UI를 비활성화할 수 있도록 대화 가능 여부를 함께 제공한다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
@@ -115,6 +114,8 @@ MVP에서는 조회만 가능하며 수정/삭제하지 않는다.
 | `summary` | 요약 내용 | |
 | `itemCount` | 묶인 항목 수 | `items` 길이 |
 | `items` | 카테고리에 묶인 요약 항목 목록 | `MemoSummaryItem[]` |
+| `chatAvailable` | 대화 시작에 선택 가능한지 여부 | 이미 대화에 사용되면 `false` |
+| `chatDisabledReason` | 비활성화 사유 | 예: `ALREADY_CHATTED` |
 | `createdAt` | 생성 시각 | |
 
 ### MemoSummaryItem
@@ -140,6 +141,7 @@ Diary와 Retrospective 생성의 핵심 입력이다.
 - 세션은 Memo가 아니라 사용자가 선택한 하나 이상의 MemoSummary로 시작한다.
 - 실록이의 역질문은 최대 10회로 제한한다.
 - 사용자는 언제든 끝내기 버튼으로 종료할 수 있다.
+- 사용자가 중간에 끝내기로 종료한 세션도 완전히 종료된 `ENDED` 상태로 취급하며 다시 이어서 대화하지 않는다.
 - 종료 시 짧은 마무리 멘트를 제공한다.
 - 실록이 질문, 사용자 답변, 마무리 멘트는 `conversation`에 순서가 드러나도록 저장한다.
 
@@ -247,7 +249,7 @@ User 1 ── N PersonaSource
 User 1 ── 1 Persona
 User 1 ── N Memo
 Memo 1 ── N MemoSummary
-MemoSummary N ── N DailyChatSession
+MemoSummary N ── 0..1 DailyChatSession
 DailyChatSession N ──> Diary
 DailyChatSession N ──> Retrospective
 Persona 1 ──> Retrospective
