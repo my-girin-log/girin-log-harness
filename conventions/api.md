@@ -131,11 +131,13 @@ GET /api/v1/diaries?cursor=<opaque>&limit=20
 - 추후 LLM 지연이 사용자 경험을 해치면 그때 비동기(`202`+폴링)로 전환을 검토한다(기획안 13절: LLM 비용/호출 구조 분리와 연결).
 
 **Retrospective 생성 입력 (2026-06-09 결정)**
-- 입력은 **선택 기간의 `DailyChatSession.conversation` + 원본 `Memo` + `MemoSummary` + `persona.md`** 다. `Diary`는 직접 입력이 아니다. 기간 기준은 `serviceDate`.
+- 입력은 **선택 기간의 `DailyChatSession.conversation` + `persona.md`** 다. 원본 `Memo`, `MemoSummary`, `Diary`는 직접 입력이 아니다. 기간 기준은 `serviceDate`.
 - `persona.md`가 없거나 오래돼도 **차단하지 않고 graceful**하게 생성한다(persona는 보강 신호이지 필수 차단 요소가 아니다).
 
 **Persona 갱신 (2026-06-09 결정)**
-- Persona는 **온보딩 1회 생성**으로 한정한다. 매일/주기 자동 갱신은 MVP 범위가 아니다. 노출용 Persona와 내부 `markdown`(persona.md)은 분리 유지한다.
+- Persona는 **온보딩으로 초기 생성**하고, 이후 사용자 기록을 바탕으로 `persona.md`를 주기적으로 갱신한다.
+- 갱신 주기는 매일로 고정하지 않는다. 비용과 품질을 보며 배치/내부 작업 기준으로 조정한다.
+- 회고 생성 시 `persona.md`가 없거나 오래돼도 **차단하지 않고 graceful**하게 생성한다. 노출용 Persona와 내부 `markdown`(persona.md)은 분리 유지한다.
 
 ## 7-1. Diary 달력 조회 (2026-06-09 결정)
 

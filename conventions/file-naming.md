@@ -76,13 +76,15 @@ status: OPEN
 
 매일 06:00 KST에 전날의 DailyChatSession들을 종합해 자동 생성되는 Diary다.
 원본 Memo·MemoSummary는 Diary 생성의 직접 입력이 아니다. 사용자가 날짜별로 조회하는
-요약이며, Retrospective 생성에는 Diary가 아니라 기간 내 DailyChatSession 원문을 사용한다.
+요약이며, Retrospective 생성에는 Diary가 아니라 기간 내 DailyChatSession 원문과
+`persona.md`를 사용한다.
 
 ### `/persona/persona.md`
 
-온보딩 설문, 블로그 링크, 기존 글 원문, 이후 회고 생성 과정에서 얻은 신호를 누적한
-Persona 파일이다. 사용자에게 직접 보여주기보다는 Retrospective 생성 시 사용자다운 말투와
-사고 흐름을 반영하기 위한 내부용 기준으로 사용한다.
+온보딩 설문, 블로그 링크, 기존 글 원문을 기반으로 처음 생성하고, 이후 사용자의 기록을
+바탕으로 주기적으로 갱신되는 Persona 파일이다. 사용자에게 직접 보여주기보다는
+Retrospective 생성 시 사용자다운 말투와 사고 흐름을 반영하기 위한 내부용 기준으로
+사용한다. 갱신 주기는 매일로 고정하지 않고 비용과 품질을 보며 조정한다.
 
 ## 쓰지 않을 명칭
 
