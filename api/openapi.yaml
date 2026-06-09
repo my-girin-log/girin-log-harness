@@ -236,36 +236,6 @@ paths:
         "401":
           $ref: "#/components/responses/Error"
 
-  /api/memos/{memoId}:
-    patch:
-      tags: [memos]
-      summary: Memo 수정
-      description: 작성 중인 Memo 내용을 수정한다.
-      operationId: updateMemo
-      parameters:
-        - $ref: "#/components/parameters/MemoId"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateMemoRequest"
-      responses:
-        "200":
-          description: 수정 성공
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Memo"
-        "400":
-          $ref: "#/components/responses/Error"
-        "401":
-          $ref: "#/components/responses/Error"
-        "404":
-          $ref: "#/components/responses/Error"
-        "409":
-          $ref: "#/components/responses/Error"
-
   /api/memos/summaries:
     post:
       tags: [memoSummaries]
@@ -515,30 +485,6 @@ paths:
         "404":
           $ref: "#/components/responses/Error"
 
-  /api/internal/diaries:
-    post:
-      tags: [diaries]
-      summary: Diary 자동 생성 트리거
-      description: 스케줄러가 06:00 KST에 전날 DailyChatSession들을 기반으로 Diary를 자동 생성한다. 원본 Memo·MemoSummary는 직접 입력이 아니다. 일반 클라이언트용 API가 아니다.
-      operationId: generateDailyDiary
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/GenerateDiaryRequest"
-      responses:
-        "201":
-          description: 생성 성공
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Diary"
-        "409":
-          $ref: "#/components/responses/Error"
-        "500":
-          $ref: "#/components/responses/Error"
-
   /api/retrospectives:
     get:
       tags: [retrospectives]
@@ -559,10 +505,10 @@ paths:
           $ref: "#/components/responses/Error"
     post:
       tags: [retrospectives]
-      summary: 기간 내 DailyChatSession 원문·원본 Memo·MemoSummary·persona.md 기반 Retrospective 생성
+      summary: 기간 내 DailyChatSession 원문과 persona.md 기반 Retrospective 생성
       description: |
-        선택 기간(serviceDate)의 DailyChatSession 전체 대화 원문 + 원본 Memo + MemoSummary + persona.md를
-        입력으로 회고를 생성한다. Diary는 직접 입력이 아니다. persona.md가 없거나 오래돼도 graceful하게 생성한다.
+        선택 기간(serviceDate)의 DailyChatSession 전체 대화 원문과 persona.md를 입력으로 회고를 생성한다.
+        원본 Memo, MemoSummary, Diary는 직접 입력이 아니다. persona.md가 없거나 오래돼도 graceful하게 생성한다.
       operationId: createRetrospective
       requestBody:
         required: true
@@ -632,13 +578,6 @@ components:
         type: string
         format: date
       description: 조회할 날짜. 없으면 오늘 날짜를 06:00 KST 기준으로 조회한다.
-    MemoId:
-      name: memoId
-      in: path
-      required: true
-      schema:
-        type: integer
-        format: int64
     SessionId:
       name: sessionId
       in: path
@@ -837,14 +776,6 @@ components:
           type: string
           minLength: 1
 
-    UpdateMemoRequest:
-      type: object
-      required: [content]
-      properties:
-        content:
-          type: string
-          minLength: 1
-
     CreateMemoSummariesRequest:
       type: object
       properties:
@@ -1004,15 +935,6 @@ components:
           type: string
           minLength: 1
           description: 사용자 답변 내용
-
-    GenerateDiaryRequest:
-      type: object
-      required: [date]
-      properties:
-        date:
-          type: string
-          format: date
-          description: 생성할 Diary 날짜. 06:00 KST 기준 전날 날짜.
 
     Diary:
       type: object
