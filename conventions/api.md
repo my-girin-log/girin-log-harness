@@ -131,7 +131,7 @@ GET /api/v1/diaries?cursor=<opaque>&limit=20
 - 추후 LLM 지연이 사용자 경험을 해치면 그때 비동기(`202`+폴링)로 전환을 검토한다(기획안 13절: LLM 비용/호출 구조 분리와 연결).
 
 **Retrospective 생성 입력 (2026-06-09 결정)**
-- 입력은 **선택 기간의 `DailyChatSession.conversation` + `persona.md`로 고정**한다. 원본 Memo·MemoSummary·Diary는 회고 입력에 넣지 않는다. 기간 기준은 `serviceDate`.
+- 입력은 **선택 기간의 `DailyChatSession.conversation` + 원본 `Memo` + `MemoSummary` + `persona.md`** 다. `Diary`는 직접 입력이 아니다. 기간 기준은 `serviceDate`.
 - `persona.md`가 없거나 오래돼도 **차단하지 않고 graceful**하게 생성한다(persona는 보강 신호이지 필수 차단 요소가 아니다).
 
 **Persona 갱신 (2026-06-09 결정)**
