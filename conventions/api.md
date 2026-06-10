@@ -144,6 +144,22 @@ GET /api/v1/diaries?cursor=<opaque>&limit=20
 - 마이페이지 달력은 본문 없이 **Diary가 있는 날짜만** 필요하므로 경량 엔드포인트 `GET /api/diaries/calendar`(serviceDate 목록)를 쓴다. full `GET /api/diaries`를 달력에 쓰지 않는다.
 - 특정 날짜 상세는 `GET /api/diaries/{date}`. Diary 없는 날짜는 `404`(FE가 "생성 전" 안내). `Diary.markdown`은 사용자 노출용 최종 본문이므로 그대로 렌더링한다.
 
+## 7-2. 온보딩 재제출 · EventLog · 설문 SSOT (2026-06-10 결정)
+
+**온보딩 재제출**
+- 이미 온보딩한 사용자가 `POST /api/onboarding/submissions`를 다시 보내도 **허용**한다(차단하지 않는다 — `409`/`403` 아님).
+- Persona는 **사용자당 1개**를 **덮어쓰기(갱신)**한다. 별도 버전을 만들지 않는다.
+- `OnboardingSurvey`·`PersonaSource`는 원천 이력으로 **누적 저장**한다. `onboardingCompleted`는 true로 유지된다.
+
+**EventLog 기록 주체**
+- EventLog는 **100% 백엔드 내부에서 자동 기록**한다(도메인 동작 발생 시 서버가 append). **별도 생성 API를 두지 않는다.**
+- 프론트 클릭/노출 이벤트 수집은 **MVP 제외**. 필요해지면 그때 별도 수집 경로를 논의한다.
+
+**온보딩 설문 SSOT**
+- MVP에서 설문 문항은 **고정**이다. `questionId ↔ 문구` 매핑의 단일 진실은 `requirements/product.md` 5절이다.
+- 프론트는 문구를 하드코딩할 수 있으나 `questionId`는 product.md의 번호를 그대로 쓴다. **문항 조회 API는 두지 않는다.**
+- 문항이 자주 바뀌게 되면 그때 `GET /api/onboarding/questions`를 추가한다(후속).
+
 ## 8. 명세 작성 규칙
 
 - 새 엔드포인트는 반드시 `api/openapi.yaml`에 **먼저** 정의하고, 그 다음 구현한다.
