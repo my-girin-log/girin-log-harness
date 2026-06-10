@@ -267,6 +267,15 @@ paths:
         "422":
           # 요약할 DRAFT Memo가 없음(code=NO_SUMMARIZABLE_MEMO). 전체성공/전체실패, 실패 시 Memo는 DRAFT 유지. (conventions/api.md 2-1)
           $ref: "#/components/responses/Error"
+        # LLM(실록이) 호출 실패 — 재시도 가능. code=SILOK_LLM_* (conventions/api.md 7-3)
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
+          $ref: "#/components/responses/Error"
         "500":
           $ref: "#/components/responses/Error"
 
@@ -322,6 +331,15 @@ paths:
           $ref: "#/components/responses/Error"
         "422":
           $ref: "#/components/responses/Error"
+        # LLM(실록이) 호출 실패 — 재시도 가능. code=SILOK_LLM_* (conventions/api.md 7-3)
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
+          $ref: "#/components/responses/Error"
 
   /api/daily-chat-sessions/{sessionId}:
     get:
@@ -371,6 +389,15 @@ paths:
           $ref: "#/components/responses/Error"
         "409":
           $ref: "#/components/responses/Error"
+        # LLM(실록이) 호출 실패 — 재시도 가능. code=SILOK_LLM_* (conventions/api.md 7-3)
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
+          $ref: "#/components/responses/Error"
 
   /api/daily-chat-sessions/{sessionId}/end:
     post:
@@ -392,6 +419,15 @@ paths:
         "404":
           $ref: "#/components/responses/Error"
         "409":
+          $ref: "#/components/responses/Error"
+        # LLM(실록이) 호출 실패 — 재시도 가능. code=SILOK_LLM_* (conventions/api.md 7-3)
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
           $ref: "#/components/responses/Error"
 
   /api/diaries:
@@ -533,6 +569,15 @@ paths:
         "404":
           $ref: "#/components/responses/Error"
         "422":
+          $ref: "#/components/responses/Error"
+        # LLM(실록이) 호출 실패 — 재시도 가능. code=SILOK_LLM_* (conventions/api.md 7-3)
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
           $ref: "#/components/responses/Error"
         "500":
           $ref: "#/components/responses/Error"
