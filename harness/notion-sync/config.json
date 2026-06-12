@@ -1,0 +1,44 @@
+{
+  "//": "openapi.yaml -> Notion 동기화 설정. database id / 속성명만 환경에 맞게 채우면 된다.",
+  "openapiPath": "api/openapi.yaml",
+
+  "//titleSource": "Notion '내용'(제목) 칼럼을 openapi의 어느 필드에서 가져올지. 'summary' 또는 'description'.",
+  "titleSource": "summary",
+
+  "//overwriteTitleOnUpdate": "기존 행 갱신 시 제목까지 덮어쓸지. false면 신규 생성 때만 제목을 넣고 기존 제목은 보존.",
+  "overwriteTitleOnUpdate": false,
+
+  "//properties": "Notion DB의 실제 칼럼명. 워크스페이스에서 이름이 다르면 여기만 고치면 된다.",
+  "properties": {
+    "title": "내용",
+    "method": "메서드",
+    "url": "URL",
+    "opId": "opId",
+    "apiStatus": "API 연결",
+    "backendStatus": "백엔드 진행",
+    "note": "비고"
+  },
+
+  "//humanOwned": "스크립트가 절대 덮어쓰지 않는 사람 소유 칼럼. (신규 생성 때 기본값만 넣음)",
+  "humanOwned": ["apiStatus", "backendStatus", "note"],
+
+  "//defaults": "신규 endpoint 행을 만들 때만 쓰는 기본값.",
+  "defaults": {
+    "apiStatus": "시작 전",
+    "backendStatus": "📍 시작 전"
+  },
+
+  "//databaseByTag": "openapi operation의 tags[0] -> Notion database id. REPLACE_... 부분을 'API 명세' 페이지의 실제 DB id로 채운다.",
+  "//tags": "openapi 실제 tag명 기준(camelCase). memoSummaries는 메모 DB, dailyChatSessions는 채팅 DB로 매핑.",
+  "databaseByTag": {
+    "auth": "377b46b5-3999-805a-b863-fe01055c22a2",
+    "onboarding": "377b46b5-3999-8047-be7b-cf2ebbaed445",
+    "personas": "377b46b5-3999-8047-be7b-cf2ebbaed445",
+    "memos": "377b46b5-3999-8056-b836-f8691ae07e5d",
+    "memoSummaries": "377b46b5-3999-8056-b836-f8691ae07e5d",
+    "dailyChatSessions": "377b46b5-3999-808a-99a8-d82ed3b1dd05",
+    "diaries": "377b46b5-3999-8045-a820-e22d2e88e91e",
+    "retrospectives": "377b46b5-3999-80f3-b5f2-ca2c773e383d",
+    "users": "377b46b5-3999-8005-b7aa-fa54a867e2ee"
+  }
+}
