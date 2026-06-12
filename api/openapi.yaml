@@ -421,6 +421,37 @@ paths:
         "401":
           $ref: "#/components/responses/Error"
 
+  /api/diaries/calendar:
+    get:
+      tags: [diaries]
+      summary: Diary 존재 날짜 목록 조회
+      description: Diary 본문 없이 Diary가 존재하는 serviceDate 목록만 반환한다. 마이페이지 달력용.
+      operationId: listDiaryDates
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiaryCalendarResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+
   /api/diaries/{date}:
     get:
       tags: [diaries]
@@ -965,6 +996,17 @@ components:
         nextCursor:
           type: ["string", "null"]
           description: 다음 페이지 커서. 마지막 페이지면 null.
+
+    DiaryCalendarResponse:
+      type: object
+      required: [dates]
+      properties:
+        dates:
+          type: array
+          description: Diary가 존재하는 serviceDate 목록.
+          items:
+            type: string
+            format: date
 
     CreateRetrospectiveRequest:
       type: object
