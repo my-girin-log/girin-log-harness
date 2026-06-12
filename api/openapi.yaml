@@ -236,36 +236,6 @@ paths:
         "401":
           $ref: "#/components/responses/Error"
 
-  /api/memos/{memoId}:
-    patch:
-      tags: [memos]
-      summary: Memo 수정
-      description: 작성 중인 Memo 내용을 수정한다.
-      operationId: updateMemo
-      parameters:
-        - $ref: "#/components/parameters/MemoId"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateMemoRequest"
-      responses:
-        "200":
-          description: 수정 성공
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Memo"
-        "400":
-          $ref: "#/components/responses/Error"
-        "401":
-          $ref: "#/components/responses/Error"
-        "404":
-          $ref: "#/components/responses/Error"
-        "409":
-          $ref: "#/components/responses/Error"
-
   /api/memos/summaries:
     post:
       tags: [memoSummaries]
@@ -592,13 +562,6 @@ components:
         type: string
         format: date
       description: 조회할 날짜. 없으면 오늘 날짜를 06:00 KST 기준으로 조회한다.
-    MemoId:
-      name: memoId
-      in: path
-      required: true
-      schema:
-        type: integer
-        format: int64
     SessionId:
       name: sessionId
       in: path
@@ -790,14 +753,6 @@ components:
             $ref: "#/components/schemas/Memo"
 
     CreateMemoRequest:
-      type: object
-      required: [content]
-      properties:
-        content:
-          type: string
-          minLength: 1
-
-    UpdateMemoRequest:
       type: object
       required: [content]
       properties:
