@@ -50,11 +50,13 @@ Persona 생성을 위한 원천 입력. 블로그 링크, 기존 글 원문, 설
 ## Persona
 
 사용자의 말투, 사고 흐름, 관심사, 정리 습관, 회고 기준을 요약한 정보.
-Retrospective 생성 시 "사용자다움"의 근거가 된다. 회고 생성에는 누적된 `persona.md`
-표현을 사용한다.
+Retrospective 생성 시 "사용자다움"의 근거가 된다. 회고 생성에는 사용자 기록을 바탕으로
+주기적으로 갱신되는 `persona.md` 표현을 사용한다.
 
 블로그 링크 분석 결과, 기존 글 원문, 온보딩 설문 응답을 함께 사용하되 일부 입력만 있어도
-Persona를 생성할 수 있어야 한다.
+Persona를 생성할 수 있어야 한다. 초기 Persona는 온보딩 기반으로 만들고, 이후 기록이
+쌓이면 사용자 맞춤 기준이 변할 수 있도록 내부 작업으로 갱신한다. 갱신 주기는 매일로
+고정하지 않는다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
@@ -68,6 +70,7 @@ Persona를 생성할 수 있어야 한다.
 | `preferredStructure` | 선호 글 구조 | |
 | `summary` | 회고 생성용 요약 Persona | |
 | `markdown` | `persona.md` 표현 | Retrospective 생성 입력 |
+| `lastRefreshedAt` | 마지막 갱신 시각 | 주기적 갱신 기준 |
 | `createdAt` | 생성 시각 | |
 | `updatedAt` | 수정 시각 | |
 
@@ -95,18 +98,35 @@ Persona를 생성할 수 있어야 한다.
 
 ## MemoSummary
 
-Memo 전체 내용을 AI가 읽고 카테고리별로 재구성한 요약본.
+Memo 전체 내용을 AI가 읽고 **카테고리별로 재구성한 요약본**. 한 카테고리(MemoSummary)는
+여러 원본 Memo 조각을 묶을 수 있고, 각 조각은 `MemoSummaryItem`으로 표현된다.
 MVP에서는 조회만 가능하며 수정/삭제하지 않는다.
+
+이미 대화에 사용된 MemoSummary는 비활성화 상태로 표시하고 재선택할 수 없다. 목록 조회에서는
+프론트가 카테고리 선택 UI를 비활성화할 수 있도록 대화 가능 여부를 함께 제공한다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
 | `id` | 식별자 | |
 | `userId` | 소유자 | |
-| `memoId` | 요약 대상 Memo | |
 | `date` | 서비스 기준 날짜(KST) | |
 | `categoryName` | 카테고리명 | |
 | `summary` | 요약 내용 | |
+| `itemCount` | 묶인 항목 수 | `items` 길이 |
+| `items` | 카테고리에 묶인 요약 항목 목록 | `MemoSummaryItem[]` |
+| `chatAvailable` | 대화 시작에 선택 가능한지 여부 | 이미 대화에 사용되면 `false` |
+| `chatDisabledReason` | 비활성화 사유 | 예: `ALREADY_CHATTED` |
 | `createdAt` | 생성 시각 | |
+
+### MemoSummaryItem
+
+한 카테고리에 묶인 개별 요약 항목.
+
+| 필드 | 설명 | 비고 |
+| --- | --- | --- |
+| `id` | 식별자 | |
+| `memoId` | 원본 Memo 연결 | **서버 내부 추적용. API 응답에는 포함하지 않는다**(2026-06-09 결정) |
+| `content` | 항목 내용 | 사용자 노출 |
 
 ## DailyChatSession
 
@@ -121,6 +141,7 @@ Diary와 Retrospective 생성의 핵심 입력이다.
 - 세션은 Memo가 아니라 사용자가 선택한 하나 이상의 MemoSummary로 시작한다.
 - 실록이의 역질문은 최대 10회로 제한한다.
 - 사용자는 언제든 끝내기 버튼으로 종료할 수 있다.
+- 사용자가 중간에 끝내기로 종료한 세션도 완전히 종료된 `ENDED` 상태로 취급하며 다시 이어서 대화하지 않는다.
 - 종료 시 짧은 마무리 멘트를 제공한다.
 - 실록이 질문, 사용자 답변, 마무리 멘트는 `conversation`에 순서가 드러나도록 저장한다.
 
@@ -128,13 +149,14 @@ Diary와 Retrospective 생성의 핵심 입력이다.
 | --- | --- | --- |
 | `id` | 식별자 | |
 | `userId` | 소유자 | |
-| `date` | 서비스 기준 날짜(KST) | |
-| `selectedMemoSummaryIds` | 선택된 MemoSummary 목록 | 관계 테이블 검토 |
+| `date` | 서비스 기준 날짜(KST) | **생성 시점 06:00 경계 기준. 한 세션은 하나의 serviceDate에만 속한다**(2026-06-09 결정) |
+| `selectedMemoSummaryIds` | 선택된 MemoSummary 목록 | 관계 테이블 검토. 모두 같은 serviceDate여야 한다 |
+| `selectedSummariesSnapshot` | 시작 시점 선택 Summary 내용 스냅샷 | **대화 기록 보존용 snapshot**(jsonb). 원본 변경과 무관하게 대화 맥락 고정(2026-06-09 결정) |
 | `followUpCount` | 누적 역질문 횟수 | 0~10 |
 | `maxFollowUpCount` | 역질문 상한 | 기본 10 |
 | `conversation` | 전체 대화 원문 | 실록이 질문, 사용자 답변, 마무리 멘트를 순서대로 포함 |
 | `status` | 세션 상태 | `OPEN` / `ENDED` |
-| `endedReason` | 종료 사유 | `USER_ENDED` / `MAX_FOLLOWUP` / `AI_DECIDED` |
+| `endedReason` | 종료 사유 | `USER_ENDED` / `MAX_FOLLOWUP` / `AI_DECIDED` / `SYSTEM_ENDED`(06:00 자동 종료) |
 | `closingMessage` | 종료 시 마무리 멘트 | |
 | `createdAt` | 생성 시각 | |
 | `endedAt` | 종료 시각 | |
@@ -181,7 +203,8 @@ followUpCount: 2
 ## Retrospective
 
 선택 기간의 DailyChatSession 전체 대화 원문과 `persona.md`를 기반으로 생성한 완성형
-회고 글. Diary는 Retrospective 생성의 직접 입력이 아니다.
+회고 글. 원본 Memo, MemoSummary, Diary는 Retrospective 생성의 직접 입력이 아니다.
+(2026-06-09 결정)
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
@@ -197,6 +220,8 @@ followUpCount: 2
 ## EventLog
 
 MVP 검증 지표 수집을 위한 얇은 append-only 이벤트 로그.
+**기록 주체는 100% 백엔드 내부**다(도메인 동작 시 서버가 append). 별도 생성 API를 두지 않으며,
+프론트 클릭/노출 이벤트는 MVP에서 수집하지 않는다(2026-06-10 결정).
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
@@ -226,7 +251,7 @@ User 1 ── N PersonaSource
 User 1 ── 1 Persona
 User 1 ── N Memo
 Memo 1 ── N MemoSummary
-MemoSummary N ── N DailyChatSession
+MemoSummary N ── 0..1 DailyChatSession
 DailyChatSession N ──> Diary
 DailyChatSession N ──> Retrospective
 Persona 1 ──> Retrospective

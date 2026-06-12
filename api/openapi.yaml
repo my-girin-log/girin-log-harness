@@ -264,6 +264,18 @@ paths:
           $ref: "#/components/responses/Error"
         "409":
           $ref: "#/components/responses/Error"
+        "422":
+          # 요약할 DRAFT Memo가 없음(code=NO_SUMMARIZABLE_MEMO). 전체성공/전체실패, 실패 시 Memo는 DRAFT 유지. (conventions/api.md 2-1)
+          $ref: "#/components/responses/Error"
+        # LLM(실록이) 호출 실패 — 재시도 가능. code=SILOK_LLM_* (conventions/api.md 7-3)
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
+          $ref: "#/components/responses/Error"
         "500":
           $ref: "#/components/responses/Error"
 
@@ -271,7 +283,7 @@ paths:
     get:
       tags: [memoSummaries]
       summary: MemoSummary 목록 조회
-      description: 생성된 카테고리별 MemoSummary 목록을 조회한다. MVP에서 수정/삭제는 제공하지 않는다.
+      description: 생성된 카테고리별 MemoSummary 목록을 조회한다. 이미 대화에 사용된 MemoSummary는 chatAvailable=false로 내려주며 재선택할 수 없다. MVP에서 수정/삭제는 제공하지 않는다.
       operationId: listMemoSummaries
       parameters:
         - $ref: "#/components/parameters/DateQuery"
@@ -293,6 +305,7 @@ paths:
       summary: MemoSummary 기반 대화 세션 시작
       description: |
         대화는 Memo가 아니라 하나 이상의 MemoSummary 선택으로 시작한다.
+        이미 대화에 사용되어 chatAvailable=false인 MemoSummary는 선택할 수 없다.
         세션 시작 시 실록이의 첫 질문을 conversation에 추가한다.
       operationId: createDailyChatSession
       requestBody:
@@ -315,6 +328,17 @@ paths:
         "404":
           $ref: "#/components/responses/Error"
         "409":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        # LLM(실록이) 호출 실패 — 재시도 가능. code=SILOK_LLM_* (conventions/api.md 7-3)
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
           $ref: "#/components/responses/Error"
 
   /api/daily-chat-sessions/{sessionId}:
@@ -340,7 +364,7 @@ paths:
     post:
       tags: [dailyChatSessions]
       summary: 사용자 답변 저장 및 다음 질문 반환
-      description: 사용자 답변을 conversation에 추가하고, 다음 역질문 또는 마무리 멘트까지 반영된 세션을 반환한다.
+      description: 사용자 답변을 conversation에 추가하고, 다음 역질문 또는 마무리 멘트까지 반영된 세션을 반환한다. 이미 ENDED 상태인 세션에는 답변을 추가할 수 없다.
       operationId: submitDailyChatAnswer
       parameters:
         - $ref: "#/components/parameters/SessionId"
@@ -365,12 +389,21 @@ paths:
           $ref: "#/components/responses/Error"
         "409":
           $ref: "#/components/responses/Error"
+        # LLM(실록이) 호출 실패 — 재시도 가능. code=SILOK_LLM_* (conventions/api.md 7-3)
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
+          $ref: "#/components/responses/Error"
 
   /api/daily-chat-sessions/{sessionId}/end:
     post:
       tags: [dailyChatSessions]
       summary: 대화 세션 종료
-      description: 사용자가 대화를 직접 종료한다. 마무리 멘트를 conversation에 추가하고 closingMessage로 저장한다.
+      description: 사용자가 대화를 직접 종료한다. 중간에 끝내더라도 세션은 완전히 종료된 ENDED 상태가 되며 다시 이어서 대화하지 않는다. 마무리 멘트를 conversation에 추가하고 closingMessage로 저장한다.
       operationId: endDailyChatSession
       parameters:
         - $ref: "#/components/parameters/SessionId"
@@ -386,6 +419,15 @@ paths:
         "404":
           $ref: "#/components/responses/Error"
         "409":
+          $ref: "#/components/responses/Error"
+        # LLM(실록이) 호출 실패 — 재시도 가능. code=SILOK_LLM_* (conventions/api.md 7-3)
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
           $ref: "#/components/responses/Error"
 
   /api/diaries:
@@ -424,8 +466,11 @@ paths:
   /api/diaries/calendar:
     get:
       tags: [diaries]
-      summary: Diary 존재 날짜 목록 조회
-      description: Diary 본문 없이 Diary가 존재하는 serviceDate 목록만 반환한다. 마이페이지 달력용.
+      summary: Diary가 존재하는 날짜 목록 (달력용 경량)
+      description: |
+        마이페이지 달력에서 클릭 가능한 날짜만 표시하기 위한 경량 조회.
+        본문(markdown 등) 없이 Diary가 존재하는 serviceDate 목록만 준다.
+        startDate/endDate로 표시 범위(예: 한 달)를 좁힐 수 있다.
       operationId: listDiaryDates
       parameters:
         - name: startDate
@@ -479,30 +524,6 @@ paths:
         "404":
           $ref: "#/components/responses/Error"
 
-  /api/internal/diaries:
-    post:
-      tags: [diaries]
-      summary: Diary 자동 생성 트리거
-      description: 스케줄러가 06:00 KST에 전날 DailyChatSession들을 기반으로 Diary를 자동 생성한다. 원본 Memo·MemoSummary는 직접 입력이 아니다. 일반 클라이언트용 API가 아니다.
-      operationId: generateDailyDiary
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/GenerateDiaryRequest"
-      responses:
-        "201":
-          description: 생성 성공
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Diary"
-        "409":
-          $ref: "#/components/responses/Error"
-        "500":
-          $ref: "#/components/responses/Error"
-
   /api/retrospectives:
     get:
       tags: [retrospectives]
@@ -524,6 +545,9 @@ paths:
     post:
       tags: [retrospectives]
       summary: 기간 내 DailyChatSession 원문과 persona.md 기반 Retrospective 생성
+      description: |
+        선택 기간(serviceDate)의 DailyChatSession 전체 대화 원문과 persona.md를 입력으로 회고를 생성한다.
+        원본 Memo, MemoSummary, Diary는 직접 입력이 아니다. persona.md가 없거나 오래돼도 graceful하게 생성한다.
       operationId: createRetrospective
       requestBody:
         required: true
@@ -545,6 +569,15 @@ paths:
         "404":
           $ref: "#/components/responses/Error"
         "422":
+          $ref: "#/components/responses/Error"
+        # LLM(실록이) 호출 실패 — 재시도 가능. code=SILOK_LLM_* (conventions/api.md 7-3)
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
           $ref: "#/components/responses/Error"
         "500":
           $ref: "#/components/responses/Error"
@@ -742,6 +775,10 @@ components:
         markdown:
           type: ["string", "null"]
           description: persona.md 표현. Retrospective 생성 입력으로 사용한다.
+        lastRefreshedAt:
+          type: ["string", "null"]
+          format: date-time
+          description: 사용자 기록 기반 persona.md 마지막 갱신 시각
         createdAt:
           type: string
           format: date-time
@@ -825,9 +862,13 @@ components:
           items:
             $ref: "#/components/schemas/MemoSummary"
 
+    MemoSummaryChatDisabledReason:
+      type: string
+      enum: [ALREADY_CHATTED]
+
     MemoSummary:
       type: object
-      required: [id, categoryName, summary, itemCount, items, createdAt]
+      required: [id, categoryName, summary, itemCount, items, chatAvailable, createdAt]
       properties:
         id:
           type: integer
@@ -843,18 +884,25 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MemoSummaryItem"
+        chatAvailable:
+          type: boolean
+          description: 대화 시작 시 선택 가능한지 여부. 이미 대화에 사용되면 false.
+        chatDisabledReason:
+          oneOf:
+            - $ref: "#/components/schemas/MemoSummaryChatDisabledReason"
+            - type: "null"
+          description: chatAvailable=false인 경우 비활성화 사유.
         createdAt:
           type: string
           format: date-time
 
     MemoSummaryItem:
       type: object
-      required: [id, memoId, content]
+      # memoId(원본 Memo 연결)는 응답에서 제외한다. 프론트는 원본 연결이 필요 없고,
+      # 추적은 서버 내부에서만 한다. (conventions/api.md 5-1, decisions 2026-06-09)
+      required: [id, content]
       properties:
         id:
-          type: integer
-          format: int64
-        memoId:
           type: integer
           format: int64
         content:
@@ -870,8 +918,10 @@ components:
 
     EndedReason:
       type: string
-      description: 세션 종료 사유. 진행 중인 세션에는 없다.
-      enum: [USER_ENDED, MAX_FOLLOWUP, AI_DECIDED]
+      description: |
+        세션 종료 사유. 진행 중인 세션에는 없다.
+        SYSTEM_ENDED: 06:00 KST 경계에서 OPEN 세션을 시스템이 자동 종료.
+      enum: [USER_ENDED, MAX_FOLLOWUP, AI_DECIDED, SYSTEM_ENDED]
 
     CreateDailyChatSessionRequest:
       type: object
@@ -886,13 +936,19 @@ components:
 
     ConversationTurn:
       type: object
-      description: 대화 원문의 한 발화. 별도 엔티티가 아니라 세션 conversation의 한 줄이다.
+      description: |
+        대화 원문의 한 발화. 별도 엔티티가 아니라 세션 conversation의 한 줄이다.
+        순서는 배열 순서로 보장한다(별도 sequence 필드를 두지 않는다).
       required: [role, content]
       properties:
         role:
           $ref: "#/components/schemas/ConversationRole"
         content:
           type: string
+        createdAt:
+          type: ["string", "null"]
+          format: date-time
+          description: 발화 시각(선택). UI 시간 표시용. 순서 기준은 아니다.
 
     DailyChatSession:
       type: object
@@ -944,15 +1000,6 @@ components:
           minLength: 1
           description: 사용자 답변 내용
 
-    GenerateDiaryRequest:
-      type: object
-      required: [date]
-      properties:
-        date:
-          type: string
-          format: date
-          description: 생성할 Diary 날짜. 06:00 KST 기준 전날 날짜.
-
     Diary:
       type: object
       required: [id, date, summary, markdown, createdAt]
@@ -1003,7 +1050,7 @@ components:
       properties:
         dates:
           type: array
-          description: Diary가 존재하는 serviceDate 목록.
+          description: Diary가 존재하는 serviceDate(KST) 목록. 본문은 포함하지 않는다.
           items:
             type: string
             format: date
