@@ -81,7 +81,13 @@ for (const o of ops) {
   if (!seenByDb.has(o.dbId)) seenByDb.set(o.dbId, new Set());
   seenByDb.get(o.dbId).add(o.opId);
 
-  const found = notion ? await findByOpId(o.dbId, o.opId) : null;
+  // 1차: opId로 매칭. 없으면 2차: 메서드+URL로 매칭(기존 행에 opId backfill).
+  let found = notion ? await findByOpId(o.dbId, o.opId) : null;
+  let matchedBy = "opId";
+  if (!found && notion) {
+    found = await findByMethodAndUrl(o.dbId, o.method, o.path);
+    if (found) matchedBy = "method+url→opId backfill";
+  }
 
   // 스펙 소유 칼럼만 구성
   const specProps = {
@@ -93,7 +99,7 @@ for (const o of ops) {
   if (wantTitle) specProps[P.title] = { title: [{ text: { content: o.title } }] };
 
   if (found) {
-    log(`UPDATE ${o.method.padEnd(6)} ${o.path}   (opId=${o.opId})`);
+    log(`UPDATE ${o.method.padEnd(6)} ${o.path}   (opId=${o.opId}, by ${matchedBy})`);
     if (APPLY) await notion.pages.update({ page_id: found.id, properties: specProps });
     updated++;
   } else {
@@ -140,6 +146,17 @@ async function findByOpId(dbId, opId) {
     database_id: dbId,
     filter: { property: P.opId, rich_text: { equals: opId } },
     page_size: 1,
+  });
+  return res.results[0] ?? null;
+}
+async function findByMethodAndUrl(dbId, method, url) {
+  const res = await notion.databases.query({
+    database_id: dbId,
+    filter: { and: [
+      { property: P.method, select: { equals: method } },
+      { property: P.url, rich_text: { equals: url } },
+    ] },
+    page_size: 2,
   });
   return res.results[0] ?? null;
 }

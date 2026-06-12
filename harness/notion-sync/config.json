@@ -6,7 +6,7 @@
   "titleSource": "summary",
 
   "//overwriteTitleOnUpdate": "기존 행 갱신 시 제목까지 덮어쓸지. false면 신규 생성 때만 제목을 넣고 기존 제목은 보존.",
-  "overwriteTitleOnUpdate": true,
+  "overwriteTitleOnUpdate": false,
 
   "//properties": "Notion DB의 실제 칼럼명. 워크스페이스에서 이름이 다르면 여기만 고치면 된다.",
   "properties": {
@@ -31,14 +31,14 @@
   "//databaseByTag": "openapi operation의 tags[0] -> Notion database id. REPLACE_... 부분을 'API 명세' 페이지의 실제 DB id로 채운다.",
   "//tags": "openapi 실제 tag명 기준(camelCase). memoSummaries는 메모 DB, dailyChatSessions는 채팅 DB로 매핑.",
   "databaseByTag": {
-    "auth": "REPLACE_WITH_로그인_DB_ID",
-    "onboarding": "REPLACE_WITH_온보딩페르소나_DB_ID",
-    "personas": "REPLACE_WITH_온보딩페르소나_DB_ID",
-    "memos": "REPLACE_WITH_메모_DB_ID",
-    "memoSummaries": "REPLACE_WITH_메모_DB_ID",
-    "dailyChatSessions": "REPLACE_WITH_채팅_DB_ID",
-    "diaries": "REPLACE_WITH_DIARY_DB_ID",
-    "retrospectives": "REPLACE_WITH_회고_DB_ID",
-    "users": "REPLACE_WITH_사용자_DB_ID"
+    "auth": "377b46b5-3999-805a-b863-fe01055c22a2",
+    "onboarding": "377b46b5-3999-8047-be7b-cf2ebbaed445",
+    "personas": "377b46b5-3999-8047-be7b-cf2ebbaed445",
+    "memos": "377b46b5-3999-8056-b836-f8691ae07e5d",
+    "memoSummaries": "377b46b5-3999-8056-b836-f8691ae07e5d",
+    "dailyChatSessions": "377b46b5-3999-808a-99a8-d82ed3b1dd05",
+    "diaries": "377b46b5-3999-8045-a820-e22d2e88e91e",
+    "retrospectives": "377b46b5-3999-80f3-b5f2-ca2c773e383d",
+    "users": "377b46b5-3999-8005-b7aa-fa54a867e2ee"
   }
 }
