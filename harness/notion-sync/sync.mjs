@@ -21,12 +21,15 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import SwaggerParser from "@apidevtools/swagger-parser";
 import { Client } from "@notionhq/client";
+import { buildBody } from "./render-body.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, "../..");
 const APPLY = process.argv.includes("--apply");
+const PRINT_BODY = (() => { const i = process.argv.indexOf("--print-body"); return i >= 0 ? process.argv[i + 1] : null; })();
 const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, "config.json"), "utf8"));
 const P = cfg.properties;
+const BODY = cfg.body || { generate: false, fillIfEmpty: true, overwriteExisting: false };
 const HTTP_METHODS = ["get", "post", "patch", "put", "delete"];
 
 function log(...a) { console.log(...a); }
@@ -59,8 +62,19 @@ for (const [p, item] of Object.entries(api.paths ?? {})) {
       path: p,
       title: (cfg.titleSource === "description" ? op.description : op.summary) || op.operationId,
       dbId,
+      op,
+      authRequired: !(Array.isArray(op.security) && op.security.length === 0),
     });
   }
+}
+
+// ---- 디버그: 특정 operationId의 본문 블록을 출력하고 종료 (Notion 미접근) -------
+if (PRINT_BODY) {
+  const o = ops.find((x) => x.opId === PRINT_BODY);
+  if (!o) fail(`operationId '${PRINT_BODY}' 를 찾을 수 없습니다.`);
+  log(`\n=== '${PRINT_BODY}' 본문 블록 미리보기 ===`);
+  log(JSON.stringify(buildBody(o.op, { authRequired: o.authRequired }), null, 2));
+  process.exit(0);
 }
 log(`\nopenapi에서 읽은 endpoint: ${ops.length}개  (mode: ${APPLY ? "APPLY ✍️" : "DRY-RUN 👀"})\n`);
 if (!APPLY) {
@@ -98,14 +112,19 @@ for (const o of ops) {
   const wantTitle = !found || cfg.overwriteTitleOnUpdate;
   if (wantTitle) specProps[P.title] = { title: [{ text: { content: o.title } }] };
 
+  const bodyBlocks = BODY.generate ? buildBody(o.op, { authRequired: o.authRequired }) : null;
+
   if (found) {
     log(`UPDATE ${o.method.padEnd(6)} ${o.path}   (opId=${o.opId}, by ${matchedBy})`);
-    if (APPLY) await notion.pages.update({ page_id: found.id, properties: specProps });
+    if (APPLY) {
+      await notion.pages.update({ page_id: found.id, properties: specProps });
+      if (bodyBlocks) await maybeWriteBody(found.id, bodyBlocks, o);
+    }
     updated++;
   } else {
     log(`CREATE ${o.method.padEnd(6)} ${o.path}   (opId=${o.opId})`);
     if (APPLY) {
-      await notion.pages.create({
+      const page = await notion.pages.create({
         parent: { database_id: o.dbId },
         properties: {
           ...specProps,
@@ -113,7 +132,9 @@ for (const o of ops) {
           [P.apiStatus]:     { select: { name: cfg.defaults.apiStatus } },
           [P.backendStatus]: { select: { name: cfg.defaults.backendStatus } },
         },
+        ...(bodyBlocks ? { children: bodyBlocks } : {}),
       });
+      if (bodyBlocks) log(`        └ 본문 생성됨`);
     }
     created++;
   }
@@ -159,6 +180,29 @@ async function findByMethodAndUrl(dbId, method, url) {
     page_size: 2,
   });
   return res.results[0] ?? null;
+}
+// 기존 페이지 본문 처리: 비어있으면 채우고, overwriteExisting면 비우고 새로 씀. 아니면 보존.
+async function maybeWriteBody(pageId, blocks, o) {
+  const existing = await notion.blocks.children.list({ block_id: pageId, page_size: 1 });
+  const hasBody = existing.results.length > 0;
+  if (hasBody && !BODY.overwriteExisting) {
+    if (!BODY.fillIfEmpty) return;
+    return; // 본문 있음 + 덮어쓰기 off → 사람 작성분 보존
+  }
+  if (hasBody && BODY.overwriteExisting) {
+    const all = await listAllChildren(pageId);
+    for (const b of all) { try { await notion.blocks.delete({ block_id: b.id }); } catch {} }
+  }
+  await notion.blocks.children.append({ block_id: pageId, children: blocks });
+  log(`        └ 본문 ${hasBody ? "재생성" : "생성"}됨`);
+}
+async function listAllChildren(pageId) {
+  const out = []; let cursor;
+  do {
+    const r = await notion.blocks.children.list({ block_id: pageId, start_cursor: cursor, page_size: 100 });
+    out.push(...r.results); cursor = r.has_more ? r.next_cursor : undefined;
+  } while (cursor);
+  return out;
 }
 async function listAllPages(dbId) {
   const out = [];
