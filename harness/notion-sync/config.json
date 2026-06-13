@@ -8,6 +8,13 @@
   "//overwriteTitleOnUpdate": "기존 행 갱신 시 제목까지 덮어쓸지. false면 신규 생성 때만 제목을 넣고 기존 제목은 보존.",
   "overwriteTitleOnUpdate": false,
 
+  "//body": "페이지 본문(요청/응답/예외) 자동 생성. generate=기능 on/off, fillIfEmpty=본문 비었을 때만 채움, overwriteExisting=기존 본문도 덮어씀(주의).",
+  "body": {
+    "generate": true,
+    "fillIfEmpty": true,
+    "overwriteExisting": false
+  },
+
   "//properties": "Notion DB의 실제 칼럼명. 워크스페이스에서 이름이 다르면 여기만 고치면 된다.",
   "properties": {
     "title": "내용",
