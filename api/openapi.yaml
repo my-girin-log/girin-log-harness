@@ -42,6 +42,8 @@ tags:
     description: 06:00 KST 자동 생성 Diary
   - name: retrospectives
     description: 기간 기반 회고 생성
+  - name: streaks
+    description: 다이어리 생성 기반 스트릭(잔디)
 
 paths:
   /api/auth/github:
@@ -606,6 +608,58 @@ paths:
         "404":
           $ref: "#/components/responses/Error"
 
+  /api/streaks/me/today:
+    get:
+      tags: [streaks]
+      summary: 오늘 스트릭 달성 여부 조회
+      description: |
+        현재 로그인 사용자의 "오늘(서비스 날짜, 06:00 KST 경계)" 스트릭 달성 여부를 조회한다.
+        용도: 홈 화면, 잔디 위젯, 오늘 완료 표시. 미달성이면 completed=false, diaryId/generatedAt=null.
+      operationId: getTodayStreak
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TodayStreakResponse"
+        "401":
+          $ref: "#/components/responses/Error"
+
+  /api/streaks/me:
+    get:
+      tags: [streaks]
+      summary: 스트릭 요약 + 잔디 데이터 조회
+      description: |
+        현재 로그인 사용자의 스트릭 요약(현재/최장/총 달성일)과 날짜별 달성 여부(잔디)를 조회한다.
+        startDate/endDate 미지정 시 최근 6개월을 기본 범위로 한다. 요약 수치(current/longest/total)는
+        전체 기록 기준, days 배열은 조회 범위 기준이다.
+      operationId: getStreakSummary
+      parameters:
+        - name: startDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreakSummaryResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -1105,3 +1159,55 @@ components:
         nextCursor:
           type: ["string", "null"]
           description: 다음 페이지 커서. 마지막 페이지면 null.
+
+    TodayStreakResponse:
+      type: object
+      required: [streakDate, completed]
+      properties:
+        streakDate:
+          type: string
+          format: date
+          description: 오늘의 서비스 날짜(06:00 KST 경계).
+        completed:
+          type: boolean
+          description: 오늘 스트릭 달성(=해당 서비스 날짜의 Diary 생성) 여부.
+        diaryId:
+          type: ["integer", "null"]
+          format: int64
+          description: 달성 시 해당 Diary id, 미달성이면 null.
+        generatedAt:
+          type: ["string", "null"]
+          format: date-time
+          description: 달성 시각(Diary 생성 시각), 미달성이면 null.
+
+    StreakDay:
+      type: object
+      required: [date, completed]
+      properties:
+        date:
+          type: string
+          format: date
+        completed:
+          type: boolean
+        diaryId:
+          type: ["integer", "null"]
+          format: int64
+
+    StreakSummaryResponse:
+      type: object
+      required: [currentStreak, longestStreak, totalCompletedDays, days]
+      properties:
+        currentStreak:
+          type: integer
+          description: 오늘(또는 어제)까지 이어진 연속 달성일 수. 전체 기록 기준.
+        longestStreak:
+          type: integer
+          description: 역대 최장 연속 달성일 수.
+        totalCompletedDays:
+          type: integer
+          description: 누적 총 달성일 수.
+        days:
+          type: array
+          description: 조회 범위(기본 최근 6개월)의 날짜별 달성 여부.
+          items:
+            $ref: "#/components/schemas/StreakDay"
