@@ -200,6 +200,31 @@ followUpCount: 2
 | `content` | 정리된 Markdown 본문 | |
 | `createdAt` | 생성 시각 | |
 
+## StreakDay
+
+GitHub 잔디처럼 "사용자가 그 날 다이어리를 생성했는가"를 날짜 단위로 1개만 기록한다.
+누적 카운트가 아니라 `사용자 + 스트릭 날짜` 단위 Boolean 도달 기록이다.
+
+### 동작
+
+- 스트릭 날짜는 Diary의 서비스 날짜(`serviceDate`, 06:00 KST 경계)와 동일하다.
+  - 즉 `2026-06-12 05:59`에 속한 활동은 `2026-06-11` 스트릭, `06:00` 이후는 `2026-06-12` 스트릭.
+- 다이어리 생성 성공 직후 **백엔드 내부 로직**으로 upsert한다(사용자가 직접 누르는 공개 API 아님 → 조작 방지).
+- 같은 `(userId, streakDate)`가 이미 있으면 무시한다(하루 1회만 인정).
+
+| 필드 | 설명 | 비고 |
+| --- | --- | --- |
+| `id` | 식별자 | |
+| `userId` | 소유자 | |
+| `streakDate` | 스트릭 날짜(서비스 날짜, KST) | `(userId, streakDate)` unique |
+| `diaryId` | 달성 근거 Diary | |
+| `completedAt` | 달성 시각(Diary 생성 시각) | |
+| `createdAt` | 행 생성 시각 | |
+| `updatedAt` | 행 수정 시각 | |
+
+조회 API는 `GET /api/streaks/me/today`(오늘 달성 여부), `GET /api/streaks/me`(요약+잔디).
+요약 수치(currentStreak/longestStreak/totalCompletedDays)는 전체 기록 기준, days 배열은 조회 범위 기준이다.
+
 ## Retrospective
 
 선택 기간의 DailyChatSession 전체 대화 원문과 `persona.md`를 기반으로 생성한 완성형
@@ -256,11 +281,13 @@ DailyChatSession N ──> Diary
 DailyChatSession N ──> Retrospective
 Persona 1 ──> Retrospective
 User 1 ── N Diary       (date 기준 하루 1개)
+Diary 1 ──> StreakDay    (다이어리 생성 시 해당 서비스 날짜 스트릭 기록)
+User 1 ── N StreakDay   (streakDate 기준 하루 1개)
 User 1 ── N Retrospective
 User 1 ── N EventLog
 ```
 
 ## MVP 제외 도메인
 
-- `Pet`: 실록이 성장, EXP, streak 등은 MVP 제외.
+- `Pet`: 실록이 성장, EXP 등은 MVP 제외. (단, 다이어리 기반 streak은 `StreakDay`로 도입됨)
 - Export 서버 모델: Markdown 복사/다운로드는 FE 기능으로 처리한다.
