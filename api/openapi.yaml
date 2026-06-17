@@ -302,6 +302,31 @@ paths:
           $ref: "#/components/responses/Error"
 
   /api/daily-chat-sessions:
+    get:
+      tags: [dailyChatSessions]
+      summary: 내 대화 세션 목록 조회 (특정 서비스 날짜)
+      description: |
+        특정 서비스 날짜(미지정 시 오늘, 06:00 KST 경계)의 내 DailyChatSession 전체를 상태 무관하게 반환한다.
+        각 세션이 memoSummaryIds를 포함하므로, 프론트는 카테고리별 채팅을 매핑/복원할 수 있다.
+      operationId: listDailyChatSessions
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DailyChatSessionListResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
     post:
       tags: [dailyChatSessions]
       summary: MemoSummary 기반 대화 세션 시작
@@ -1044,6 +1069,20 @@ components:
         endedAt:
           type: ["string", "null"]
           format: date-time
+
+    DailyChatSessionListResponse:
+      type: object
+      required: [date, sessions]
+      properties:
+        date:
+          type: string
+          format: date
+          description: 조회 기준 서비스 날짜(06:00 KST).
+        sessions:
+          type: array
+          description: 해당 서비스 날짜의 내 대화 세션 전체(상태 무관, 생성순).
+          items:
+            $ref: "#/components/schemas/DailyChatSession"
 
     SubmitChatAnswerRequest:
       type: object
