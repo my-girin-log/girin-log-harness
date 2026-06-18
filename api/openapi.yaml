@@ -43,7 +43,7 @@ tags:
   - name: retrospectives
     description: 기간 기반 회고 생성
   - name: streaks
-    description: 다이어리 생성 기반 스트릭(잔디)
+    description: 채팅 세션 종료 기반 스트릭(잔디)
 
 paths:
   /api/auth/github:
@@ -639,6 +639,7 @@ paths:
       summary: 오늘 스트릭 달성 여부 조회
       description: |
         현재 로그인 사용자의 "오늘(서비스 날짜, 06:00 KST 경계)" 스트릭 달성 여부를 조회한다.
+        스트릭은 해당 서비스 날짜에 종료된 DailyChatSession이 있으면 달성으로 기록된다.
         용도: 홈 화면, 잔디 위젯, 오늘 완료 표시. 미달성이면 completed=false, diaryId/generatedAt=null.
       operationId: getTodayStreak
       responses:
@@ -1031,11 +1032,15 @@ components:
 
     DailyChatSession:
       type: object
-      required: [sessionId, status, followUpCount, maxFollowUpCount, memoSummaryIds, conversation]
+      required: [sessionId, serviceDate, status, followUpCount, maxFollowUpCount, memoSummaryIds, conversation]
       properties:
         sessionId:
           type: integer
           format: int64
+        serviceDate:
+          type: string
+          format: date
+          description: 세션이 속한 서비스 날짜(06:00 KST 경계). 스트릭·다이어리의 날짜 기준과 동일하다.
         status:
           $ref: "#/components/schemas/DailyChatSessionStatus"
         followUpCount:
@@ -1209,15 +1214,15 @@ components:
           description: 오늘의 서비스 날짜(06:00 KST 경계).
         completed:
           type: boolean
-          description: 오늘 스트릭 달성(=해당 서비스 날짜의 Diary 생성) 여부.
+          description: 오늘 스트릭 달성(=해당 서비스 날짜에 종료된 DailyChatSession 존재) 여부.
         diaryId:
           type: ["integer", "null"]
           format: int64
-          description: 달성 시 해당 Diary id, 미달성이면 null.
+          description: 세션 종료 기준 스트릭에선 보통 null(향후 그날 Diary와 연결 시 채워질 수 있음).
         generatedAt:
           type: ["string", "null"]
           format: date-time
-          description: 달성 시각(Diary 생성 시각), 미달성이면 null.
+          description: 달성 시각(채팅 세션 종료 시각), 미달성이면 null.
 
     StreakDay:
       type: object
@@ -1228,9 +1233,11 @@ components:
           format: date
         completed:
           type: boolean
+          description: 해당 서비스 날짜에 종료된 DailyChatSession 존재 여부.
         diaryId:
           type: ["integer", "null"]
           format: int64
+          description: 세션 종료 기준 스트릭에선 보통 null.
 
     StreakSummaryResponse:
       type: object
