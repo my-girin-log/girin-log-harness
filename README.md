@@ -1,4 +1,4 @@
-# girin-codex
+# girin-log-harness
 
 > **내가그린기린기록** 프로젝트의 단일 진실 공급원(SSOT)이자 하네스 규칙 저장소.
 > 백엔드 2명 · 프론트엔드 1명이 **바이브 코딩**으로 협업할 때,
@@ -19,15 +19,15 @@
 
 ```mermaid
 flowchart TB
-    subgraph CODEX["girin-codex — 단일 진실(SSOT)"]
+    subgraph HARNESS["girin-log-harness — 단일 진실(SSOT)"]
         direction LR
         REQ["requirements/<br/>요구사항"]
         SPEC["api/openapi.yaml<br/>계약"]
         CONV["conventions/<br/>규칙"]
         HARN["harness/<br/>강제 hook"]
     end
-    CODEX -->|"참조 (submodule / 복사)"| BE["backend 레포<br/>BE 2명"]
-    CODEX -->|"참조 (submodule / 복사)"| FE["frontend 레포<br/>FE 1명"]
+    HARNESS -->|"참조 (submodule / 복사)"| BE["backend 레포<br/>BE 2명"]
+    HARNESS -->|"참조 (submodule / 복사)"| FE["frontend 레포<br/>FE 1명"]
     SPEC -.->|"이대로 구현"| BE
     SPEC -.->|"타입 생성 · 이대로 호출"| FE
 ```
@@ -51,7 +51,7 @@ flowchart TB
 ## 📂 레포 구조
 
 ```text
-girin-codex/
+girin-log-harness/
 ├── README.md            ← 지금 이 문서 (이거 하나로 충분)
 ├── AGENTS.md            ← Codex/Claude 공통 에이전트 지침
 ├── CLAUDE.md            ← Claude Code용 얇은 진입점
@@ -68,6 +68,7 @@ girin-codex/
 │   ├── api.md           ·  에러 envelope · 06:00 KST 경계 · 인증 · 상태코드
 │   ├── coding.md        ·  스택 · BE 도메인 분담 · 디렉터리
 │   ├── git.md           ·  한국어 커밋 · 브랜치 · PR
+│   ├── pr.md            ·  Codex 리뷰 품질을 높이기 위한 PR 작업 단위
 │   └── glossary.md      ·  용어 한↔영 고정 (Diary/Retrospective…)
 ├── domain/
 │   └── data-model.md    ← 엔티티 정의 (User · Persona · Memo · …)
@@ -96,15 +97,15 @@ girin-codex/
 ```mermaid
 sequenceDiagram
     participant Dev as 개발자 (누구든)
-    participant Codex as girin-codex
+    participant Harness as girin-log-harness
     participant Review as PR 리뷰
     participant BE as backend 레포
     participant FE as frontend 레포
-    Dev->>Codex: api/openapi.yaml 또는 conventions 수정
+    Dev->>Harness: api/openapi.yaml 또는 conventions 수정
     Dev->>Review: PR 생성 (영향 범위 명시)
-    Review->>Codex: 승인 후 main 머지
-    Codex->>BE: submodule 업데이트 / pull
-    Codex->>FE: submodule 업데이트 / pull
+    Review->>Harness: 승인 후 main 머지
+    Harness->>BE: submodule 업데이트 / pull
+    Harness->>FE: submodule 업데이트 / pull
     FE->>FE: 타입 재생성 (openapi → types)
     BE->>BE: 명세 준수 테스트
     Note over BE,FE: hook이 자동으로 검증 · 위반 시 차단
@@ -143,8 +144,8 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    C["girin-codex"]
-    C ==>|"권장: git submodule<br/>(예: vendor/codex)"| BE["backend 레포"]
+    C["girin-log-harness"]
+    C ==>|"권장: git submodule<br/>(예: vendor/harness)"| BE["backend 레포"]
     C ==>|"권장: git submodule"| FE["frontend 레포"]
     C -.->|"간단: harness/ 를 .claude/ 로 복사"| BE
     C -.->|"간단: harness/ 를 .claude/ 로 복사"| FE
@@ -223,7 +224,7 @@ flowchart LR
 # 1. (최초 1회) 레포 초기화
 git init
 git add .
-git commit -m "chore: girin-codex 초기 구조 추가"
+git commit -m "chore: girin-log-harness 초기 구조 추가"
 git remote add origin <원격-레포-URL>
 git push -u origin main
 
@@ -246,6 +247,7 @@ git push -u origin main
 | [`conventions/coding.md`](conventions/coding.md) | 스택 확정 · **BE 2명은 레이어가 아니라 도메인으로 분담** · 디렉터리 · LLM 호출 격리 |
 | [`conventions/file-naming.md`](conventions/file-naming.md) | Markdown 보관 구조 · 파일명 · 디렉터리명 기준 |
 | [`conventions/git.md`](conventions/git.md) | 한국어 커밋 메시지 · 브랜치 전략 · PR 규칙(영향 범위 명시) |
+| [`conventions/pr.md`](conventions/pr.md) | Codex 코드 리뷰 품질을 높이기 위한 PR 작업 단위 · 분할 조건 · PR 본문 템플릿 |
 | [`conventions/glossary.md`](conventions/glossary.md) | 한↔영 용어 단일화(Diary/Retrospective/Memo …) · 표기 규칙 |
 | [`domain/data-model.md`](domain/data-model.md) | 엔티티 정의 · MemoSummary 기반 대화 · EventLog |
 

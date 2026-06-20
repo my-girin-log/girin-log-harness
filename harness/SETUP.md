@@ -10,7 +10,7 @@
 ## 모델
 
 ```
-girin-codex (이 레포, SSOT)
+girin-log-harness (이 레포, SSOT)
    ├─ api/openapi.yaml      ← 계약
    ├─ conventions/          ← 규칙 문서
    └─ harness/              ← hook 원본  ┐
@@ -19,7 +19,7 @@ girin-codex (이 레포, SSOT)
    frontend 레포 ── .claude/settings.json ┘
 ```
 
-권장: 이 레포를 BE/FE에 **git submodule**로 넣어(`vendor/codex` 등) 항상 최신 계약/hook을 참조.
+권장: 이 레포를 BE/FE에 **git submodule**로 넣어(`vendor/harness` 등) 항상 최신 계약/hook을 참조.
 간단히 가려면 `harness/` 내용을 각 레포의 `.claude/`로 복사해도 된다(대신 동기화는 수동).
 
 ## BE/FE 공통 설치
@@ -38,7 +38,7 @@ girin-codex (이 레포, SSOT)
 | PreToolUse | `Bash` | (선택) 보호 브랜치 Bash 차단 | 최소 구현은 보호 브랜치에서 Bash 전체를 막는다. 필요하면 git commit/push만 차단하도록 확장 |
 
 - 종료 코드 0 = 통과, 2 = 차단(PreToolUse는 재고 유도, PostToolUse는 에이전트에 에러 전달).
-- 이 레포(girin-codex) 자체는 `../.claude/settings.json`에서 openapi 유효성만 가볍게 건다.
+- 이 레포(girin-log-harness) 자체는 `../.claude/settings.json`에서 openapi 유효성만 가볍게 건다.
 
 ## 검증
 

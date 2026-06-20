@@ -1,4 +1,4 @@
-# CLAUDE.md — girin-codex
+# CLAUDE.md — girin-log-harness
 
 이 레포의 공통 AI 작업 지침은 `AGENTS.md`를 따른다.
 
