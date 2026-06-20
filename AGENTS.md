@@ -1,4 +1,4 @@
-# AGENTS.md — girin-codex
+# AGENTS.md — girin-log-harness
 
 이 파일은 이 레포에서 작업하는 코딩 에이전트를 위한 컨텍스트다.
 **여기 적힌 건 "지향"이고, 반드시 지켜야 하는 건 `harness/`의 hook이 강제한다.**
@@ -9,7 +9,7 @@
 - 애플리케이션 코드가 아니다. **요구사항(`requirements/`) + 계약(`api/openapi.yaml`) + 규칙(`conventions/`) + 하네스(`harness/`)** 의 모음이다.
 - 여기서의 작업은 거의 항상 "문서/명세를 정확하고 일관되게 다듬는 것"이다. 기능 구현이 아니다.
 - 이 레포는 `girin-log-back`, `girin-log-front` 등 제품 레포가 submodule 로 참조하는 **SSOT**다. 계약 변경은 반드시 이 레포에서 별도 브랜치와 PR로 진행한다.
-- 제품 레포의 `vendor/codex` 경로 안에서 파일을 직접 수정하지 않는다. 제품 레포에서는 의도한 경우에만 submodule 포인터 갱신을 커밋한다.
+- 제품 레포의 `vendor/harness` 경로 안에서 파일을 직접 수정하지 않는다. 제품 레포에서는 의도한 경우에만 submodule 포인터 갱신을 커밋한다.
 
 ## 문서 우선순위
 
