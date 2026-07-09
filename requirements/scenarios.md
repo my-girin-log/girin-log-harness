@@ -24,14 +24,18 @@
 ### 흐름
 
 1. 사용자는 현재 작업 중인 `DRAFT` Memo에 자유롭게 기록한다.
-2. 사용자는 요약하기를 실행한다.
-3. 시스템은 Memo 전체를 분석하여 카테고리별 MemoSummary를 생성한다.
-4. 요약 완료 후 원본 Memo는 `SUMMARIZED` 상태가 된다.
-5. 사용자가 계속 기록할 수 있도록 새로운 빈 `DRAFT` Memo를 생성한다.
+2. 사용자는 요약 전 `DRAFT` Memo의 내용을 수정하거나 삭제할 수 있다.
+3. 사용자는 요약하기를 실행한다.
+4. 시스템은 남아 있는 `DRAFT` Memo 전체를 분석하여 카테고리별 MemoSummary를 생성한다.
+5. 요약 완료 후 원본 Memo는 `SUMMARIZED` 상태가 된다.
+6. 사용자가 계속 기록할 수 있도록 새로운 빈 `DRAFT` Memo를 생성한다.
 
 ### 인수 조건
 
 - Memo는 하루에 여러 개 생성될 수 있어야 한다.
+- `DRAFT` Memo만 수정/삭제할 수 있어야 한다.
+- `SUMMARIZED` 또는 `ARCHIVED` Memo를 수정/삭제하려 하면 거부해야 한다.
+- 삭제된 Memo는 조회, MemoSummary 생성, Diary 생성 입력에서 제외되어야 한다.
 - 하나의 기록은 여러 MemoSummary에 반영될 수 있다.
 - 여러 기록은 하나의 MemoSummary로 통합될 수 있다.
 - 이미 대화에 사용된 MemoSummary는 비활성화 상태로 표시되어야 한다.
@@ -64,8 +68,8 @@
 ### 흐름
 
 1. 매일 06:00 KST에 시스템이 전날 작업 공간을 정리한다.
-2. 전날 DailyChatSession들을 종합해 Diary를 생성한다.
-3. 하루에 여러 DailyChatSession이 있어도 Diary는 날짜별 하나만 생성한다.
+2. 전날 Memo 원본과 DailyChatSession들을 종합해 Diary를 생성한다. MemoSummary가 있으면 카테고리/압축 힌트로 참고한다.
+3. 하루에 여러 Memo와 DailyChatSession이 있어도 Diary는 날짜별 하나만 생성한다.
 4. 기존 데이터는 삭제하지 않고 보관한다.
 5. 이후 새로운 빈 Memo를 생성할 수 있는 상태가 된다.
 
@@ -73,7 +77,9 @@
 
 - 이 서비스의 하루 경계는 00:00이 아니라 06:00 KST다.
 - 06:00 KST 이전 새벽 기록은 전날 기록으로 계산한다.
-- 원본 Memo와 MemoSummary는 Diary 생성 입력으로 직접 사용하지 않는다.
+- 채팅하지 않은 Memo도 Diary 생성 입력에 포함되어 날짜별 정리본에 보존되어야 한다.
+- MemoSummary는 Diary 생성의 보조 힌트이며, 원본 Memo를 대체하지 않는다.
+- Memo에만 남은 내용은 기록된 사실로 반영하고, DailyChatSession에서 확인된 감정·이유·판단 기준은 더 강한 회고 신호로 반영한다.
 - Diary는 사용자가 하루를 어떻게 보냈는지 요약하는 날짜별 정리본이다.
 - Diary 수동 생성은 MVP 범위가 아니다.
 - Diary가 아직 생성되지 않은 날짜는 생성 전 상태를 안내해야 한다.
@@ -83,14 +89,15 @@
 ### 흐름
 
 1. 사용자는 시작 날짜와 종료 날짜를 선택한다.
-2. 시스템은 선택 기간의 DailyChatSession 전체 대화 원문과 persona.md를 기반으로 Retrospective를 생성한다.
+2. 시스템은 선택 기간의 Diary, DailyChatSession 전체 대화 원문, persona.md를 기반으로 Retrospective를 생성한다.
 3. 생성된 Retrospective는 Markdown으로 저장된다.
 4. 사용자는 생성된 Retrospective를 조회하고 Markdown을 복사하거나 다운로드한다.
 
 ### 인수 조건
 
 - Retrospective에는 제목, 도입, 주요 경험, 고민과 판단 기준, 배운 점, 다음에 다르게 해볼 점, 마무리가 포함되어야 한다.
-- Diary는 Retrospective 생성의 직접 입력이 아니다.
+- Retrospective는 Diary로 하루 전체 맥락을 받고, DailyChatSession 원문으로 대화에서 깊어진 감정·이유·판단 기준을 보강한다.
+- 원본 Memo는 Diary에 흡수된 맥락으로 사용하고, MemoSummary는 Diary 생성 시 보조 힌트로만 참고한다. Retrospective 생성의 기본 직접 입력으로 원본 Memo와 MemoSummary를 다시 넣지 않는다.
 - Markdown 복사/다운로드는 별도 서버 API 없이 FE 기능으로 처리한다.
 
 ## 6. EventLog 저장

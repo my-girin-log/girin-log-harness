@@ -238,6 +238,64 @@ paths:
         "401":
           $ref: "#/components/responses/Error"
 
+  /api/memos/{memoId}:
+    patch:
+      tags: [memos]
+      summary: Memo 수정
+      description: 작성 중인 DRAFT Memo의 content를 수정한다. SUMMARIZED/ARCHIVED Memo는 수정할 수 없다.
+      operationId: updateMemo
+      parameters:
+        - name: memoId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateMemoRequest"
+      responses:
+        "200":
+          description: 수정 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Memo"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+    delete:
+      tags: [memos]
+      summary: Memo 삭제
+      description: 작성 중인 DRAFT Memo를 삭제한다. SUMMARIZED/ARCHIVED Memo는 삭제할 수 없다.
+      operationId: deleteMemo
+      parameters:
+        - name: memoId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: 삭제 성공
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+
   /api/memos/summaries:
     post:
       tags: [memoSummaries]
@@ -571,10 +629,13 @@ paths:
           $ref: "#/components/responses/Error"
     post:
       tags: [retrospectives]
-      summary: 기간 내 DailyChatSession 원문과 persona.md 기반 Retrospective 생성
+      summary: 기간 내 Diary, DailyChatSession 원문, persona.md 기반 Retrospective 생성
       description: |
-        선택 기간(serviceDate)의 DailyChatSession 전체 대화 원문과 persona.md를 입력으로 회고를 생성한다.
-        원본 Memo, MemoSummary, Diary는 직접 입력이 아니다. persona.md가 없거나 오래돼도 graceful하게 생성한다.
+        선택 기간(serviceDate)의 Diary, DailyChatSession 전체 대화 원문, persona.md를 입력으로 회고를 생성한다.
+        Diary는 채팅하지 않은 Memo까지 포함한 하루 전체 맥락이고, DailyChatSession 원문은 대화에서 깊어진 감정·이유·판단 기준을 보강한다.
+        원본 Memo는 Diary에 흡수된 하루 맥락으로 사용하고, MemoSummary는 Diary 생성 시 카테고리/압축 힌트로만 참고한다.
+        Retrospective 생성의 기본 직접 입력으로 원본 Memo와 MemoSummary를 다시 넣지 않는다.
+        persona.md가 없거나 오래돼도 graceful하게 생성한다.
       operationId: createRetrospective
       requestBody:
         required: true
@@ -901,6 +962,14 @@ components:
             $ref: "#/components/schemas/Memo"
 
     CreateMemoRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          minLength: 1
+
+    UpdateMemoRequest:
       type: object
       required: [content]
       properties:
