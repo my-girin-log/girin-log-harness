@@ -89,7 +89,11 @@
 - **역질문 최대 10회** — 9/10/11회 경계. 10회 도달 시 더 질문하지 않고 `endedReason=MAX_FOLLOWUP`으로 종료된다. **서버 정책 레벨**에서 막히는지 확인(프롬프트만 신뢰 금지).
 - **세션 종료 사유** — `USER_ENDED`/`MAX_FOLLOWUP`/`AI_DECIDED`가 올바른 상황에서 기록된다.
 - **Diary는 하루 1개** — 하루에 여러 Memo·여러 DailyChatSession이 있어도 06:00 KST 정리 결과 Diary는 날짜당 정확히 하나다.
+- **채팅하지 않은 Memo 보존** — DailyChatSession이 없거나 특정 MemoSummary가 대화에 사용되지 않아도, 해당 서비스 날짜의 Memo 원본은 Diary 생성 입력에 포함된다.
+- **MemoSummary는 보조 힌트** — Diary 생성에서 MemoSummary는 원본 Memo를 대체하지 않고, 카테고리/압축 힌트로만 사용된다.
 - **Memo 상태 전이** — `DRAFT → SUMMARIZED`(요약 시), 06:00 KST 이후 `ARCHIVED`. 정의되지 않은 전이는 거부된다.
+- **Memo 수정/삭제 범위** — `DRAFT` Memo만 수정/삭제 가능하다. `SUMMARIZED`/`ARCHIVED` Memo 수정은 `MEMO_NOT_EDITABLE`, 삭제는 `MEMO_NOT_DELETABLE`로 거부된다.
+- **삭제된 Memo 제외** — 삭제된 Memo는 조회, MemoSummary 생성, Diary 생성 입력에 포함되지 않는다.
 - **Persona 부분 입력 생성** — 블로그/원문/설문 중 일부만 있어도 Persona가 생성된다.
 - **MemoSummary 불변** — MVP에서 수정/삭제 경로가 없다(엔드포인트 부재 또는 거부).
 - **MemoSummary 재선택 금지** — 이미 DailyChatSession에 사용된 MemoSummary는 `chatAvailable=false`로 조회되고, 다시 세션 시작에 사용하면 `422`로 거부된다.

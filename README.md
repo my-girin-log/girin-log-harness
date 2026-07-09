@@ -169,7 +169,11 @@ erDiagram
     User ||--o{ Memo : "하루 여러 개"
     Memo ||--o{ MemoSummary : "요약 생성"
     MemoSummary }o--o| DailyChatSession : "대화 시작"
+    Memo }o--o{ Diary : "하루 원본 기록"
+    MemoSummary }o--o{ Diary : "보조 힌트"
+    DailyChatSession }o--o{ Diary : "하루 대화 원문"
     DailyChatSession }o--o{ Retrospective : "기간 내 대화 원문"
+    Diary }o--o{ Retrospective : "기간 내 하루 맥락"
     Persona ||--o{ Retrospective : "persona.md"
     User ||--o{ Diary : "보유"
     User ||--o{ Retrospective : "기간 선택"
@@ -198,22 +202,25 @@ erDiagram
 
 ```mermaid
 flowchart LR
-    M["Memo 작성<br/>(하루 여러 개)"] --> MS["요약하기<br/>→ MemoSummary 생성"]
+    M["Memo 작성/수정/삭제<br/>(DRAFT만 수정·삭제)"] --> MS["요약하기<br/>→ MemoSummary 생성"]
     MS --> NM["새 DRAFT Memo 생성"]
     MS --> S["MemoSummary 선택<br/>→ 세션 시작"]
     S --> Q["실록이 역질문<br/>(최대 10회)"]
     Q --> E["'끝내기'<br/>→ 세션 종료"]
-    E ==>|"06:00 KST"| D["Diary 1개 자동 생성<br/>+ 작업 공간 초기화"]
-    E --> R["기간 선택<br/>→ DailyChatSession 원문 + persona.md로 Retrospective 생성"]
+    M --> D["Diary 1개 자동 생성<br/>Memo 원본 + 대화<br/>MemoSummary는 보조 힌트"]
+    E ==>|"06:00 KST"| D
+    D --> R["기간 선택<br/>→ Diary + DailyChatSession 원문 + persona.md로 Retrospective 생성"]
+    E --> R
 ```
 
 - Memo는 **하루 여러 개**, 세션도 **하루 여러 개**, 하지만 **Diary는 하루 1개**.
+- Memo 수정/삭제는 **DRAFT Memo만** 가능하고, 삭제된 Memo는 조회·요약·Diary 입력에서 제외한다.
 - 대화는 Memo가 아니라 **하나 이상의 MemoSummary 선택**으로 시작한다.
 - 이미 대화한 MemoSummary는 비활성화되며 재선택할 수 없다.
 - 전체 대화 원문은 별도 `ChatMessage` 없이 **DailyChatSession의 `conversation`** 에 저장한다.
 - 역질문은 **최대 10회**(프롬프트로 강제), '끝내기' 버튼/AI 판단으로 종료. 사용자가 중간에 끝낸 세션도 완전히 종료된 상태로 취급한다.
-- **06:00 KST**: Diary 자동 생성 + 일일 작업 공간 초기화.
-- Retrospective는 **선택 기간의 DailyChatSession 원문 + persona.md** 로 생성한다. Diary는 직접 입력이 아니다.
+- **06:00 KST**: Memo 원본과 DailyChatSession 원문으로 Diary 자동 생성 + 일일 작업 공간 초기화. MemoSummary는 있을 때만 카테고리/압축 힌트로 참고하며, 채팅하지 않은 Memo도 Diary에 반영한다.
+- Retrospective는 **선택 기간의 Diary + DailyChatSession 원문 + persona.md** 로 생성한다. 원본 Memo는 Diary에 흡수된 하루 맥락으로 사용하고, MemoSummary는 Diary 생성 시 보조 힌트로만 참고한다.
 - `persona.md`는 온보딩으로 시작하고, 이후 사용자 기록을 바탕으로 주기적으로 갱신된다.
 
 ---

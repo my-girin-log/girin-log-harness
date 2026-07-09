@@ -25,7 +25,7 @@
 ### 이 서비스의 작업 단위 예시
 
 - **Memo 요약하기** — `Memo`를 `SUMMARIZED`로 바꾸고 + 카테고리별 `MemoSummary`를 만들고 + 새 빈 `DRAFT` Memo를 만드는 흐름은 **함께 성립**해야 한다. 일부만 되면 사용자가 모순된 작업 공간을 본다 → 하나로 묶는다.
-- **06:00 KST 자동 정리** — 전날 **DailyChatSession들**을 모아 **Diary 1개** 생성 + 이전 Memo `ARCHIVED` + 새 작업 공간 시작. Diary 하루 1개 보장과 직결되므로 정합성 단위로 묶는다. (원본 Memo·MemoSummary는 Diary 생성의 직접 입력이 아니며, 초기화는 **삭제가 아니라 보관**임에 주의 — `conventions/api.md`.)
+- **06:00 KST 자동 정리** — 전날 **Memo 원본과 DailyChatSession들**을 모아 **Diary 1개** 생성 + 이전 Memo `ARCHIVED` + 새 작업 공간 시작. MemoSummary는 있을 때만 보조 힌트로 참고한다. Diary 하루 1개 보장과 직결되므로 정합성 단위로 묶는다. 초기화는 **삭제가 아니라 보관**이고, 채팅하지 않은 Memo도 Diary에 반영한다(`conventions/api.md`).
 - **세션 종료** — `status=ENDED` + `endedReason` 기록은 함께 성립해야 한다.
 - **EventLog** — append-only **부수 효과**다. 본질 트랜잭션을 롤백시키지 않도록 경계 밖에서 다룬다.
 
