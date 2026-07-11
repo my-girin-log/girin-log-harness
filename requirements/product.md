@@ -26,7 +26,7 @@ MVP는 기록 저장소 자체가 아니라 기존 Notion, 블로그, GitHub에 
 | DailyChatSession | 대화 시작/질문 생성/답변 저장/종료 | MemoSummary 기반 실록이 역질문 세션과 전체 대화 원문 저장 |
 | Diary | Diary 자동 생성/조회 | 하루의 Memo 원본과 DailyChatSession을 근거로, MemoSummary가 있으면 보조 힌트로 참고하는 일일 요약 생성 및 조회 |
 | Retrospective | 회고 생성/조회 | 선택 기간의 Diary, DailyChatSession, persona.md를 기반으로 회고 글 생성 및 조회 |
-| Streak | 잔디(스트릭) 조회 | 채팅 세션을 종료한 날을 날짜 단위로 1개 기록하고, 오늘 달성 여부·요약·잔디 데이터 조회 |
+| Streak | 잔디(스트릭) 조회 | Memo를 작성한 날을 날짜 단위로 1개 기록하고, 오늘 달성 여부·요약·잔디 데이터 조회 |
 | EventLog | 이벤트 로깅 | MVP 검증 지표 수집 |
 
 Markdown 복사/다운로드는 별도 서버 API 없이 FE 기능으로 처리한다.
