@@ -63,7 +63,7 @@
 - 종료 시 짧은 마무리 멘트를 제공해야 한다.
 - 종료 사유는 사용자 종료, 최대 질문 수 도달, AI 판단 종료를 구분할 수 있어야 한다.
 
-## 4. 06:00 KST Diary 자동 생성과 수동 생성
+## 4. 06:00 KST Diary 자동 생성
 
 ### 흐름
 
@@ -72,7 +72,6 @@
 3. 하루에 여러 Memo와 DailyChatSession이 있어도 Diary는 날짜별 하나만 생성한다.
 4. 기존 데이터는 삭제하지 않고 보관한다.
 5. 이후 새로운 빈 Memo를 생성할 수 있는 상태가 된다.
-6. 사용자는 자동 생성이 누락된 과거 서비스 날짜에 대해 Diary 수동 생성을 요청할 수 있다.
 
 ### 인수 조건
 
@@ -82,9 +81,7 @@
 - MemoSummary는 Diary 생성의 보조 힌트이며, 원본 Memo를 대체하지 않는다.
 - Memo에만 남은 내용은 기록된 사실로 반영하고, DailyChatSession에서 확인된 감정·이유·판단 기준은 더 강한 회고 신호로 반영한다.
 - Diary는 사용자가 하루를 어떻게 보냈는지 요약하는 날짜별 정리본이다.
-- Diary 수동 생성은 이미 종료된 과거 서비스 날짜에만 허용한다. 현재 진행 중인 서비스 날짜와 미래 날짜는 수동 생성할 수 없다.
-- 이미 Diary가 있는 날짜의 수동 생성 요청은 기존 Diary를 반환하는 멱등 동작이어야 한다.
-- 생성 대상 날짜에 Memo와 DailyChatSession이 모두 없으면 빈 Diary를 생성하지 않는다.
+- Diary 수동 생성은 MVP 범위가 아니다.
 - Diary가 아직 생성되지 않은 날짜는 생성 전 상태를 안내해야 한다.
 
 ## 5. Retrospective 생성
@@ -100,6 +97,9 @@
 
 - Retrospective에는 제목, 도입, 주요 경험, 고민과 판단 기준, 배운 점, 다음에 다르게 해볼 점, 마무리가 포함되어야 한다.
 - Retrospective는 Diary로 하루 전체 맥락을 받고, DailyChatSession 원문으로 대화에서 깊어진 감정·이유·판단 기준을 보강한다.
+- 선택 기간에 현재 진행 중인 serviceDate가 포함되어 있고 아직 Diary가 없다면, 그 날짜는 Diary 대신 당일 Memo 원본과 DailyChatSession 원문으로 만든 임시 DailyContext를 사용한다.
+- 임시 DailyContext는 Retrospective 생성 시점의 스냅샷이며, 저장되거나 정식 Diary를 대체하지 않는다.
+- 다음 06:00 KST에는 기존 자동 생성 흐름대로 확정 Diary가 생성되어야 한다.
 - 원본 Memo는 Diary에 흡수된 맥락으로 사용하고, MemoSummary는 Diary 생성 시 보조 힌트로만 참고한다. Retrospective 생성의 기본 직접 입력으로 원본 Memo와 MemoSummary를 다시 넣지 않는다.
 - Markdown 복사/다운로드는 별도 서버 API 없이 FE 기능으로 처리한다.
 
