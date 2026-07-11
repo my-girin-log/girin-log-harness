@@ -219,7 +219,7 @@ flowchart LR
 - 이미 대화한 MemoSummary는 비활성화되며 재선택할 수 없다.
 - 전체 대화 원문은 별도 `ChatMessage` 없이 **DailyChatSession의 `conversation`** 에 저장한다.
 - 역질문은 **최대 10회**(프롬프트로 강제), '끝내기' 버튼/AI 판단으로 종료. 사용자가 중간에 끝낸 세션도 완전히 종료된 상태로 취급한다.
-- **06:00 KST**: Memo 원본과 DailyChatSession 원문으로 Diary 자동 생성 + 일일 작업 공간 초기화. MemoSummary는 있을 때만 카테고리/압축 힌트로 참고하며, 채팅하지 않은 Memo도 Diary에 반영한다.
+- **06:00 KST**: Memo 원본과 DailyChatSession 원문으로 Diary 자동 생성 + 일일 작업 공간 초기화. MemoSummary는 있을 때만 카테고리/압축 힌트로 참고하며, 채팅하지 않은 Memo도 Diary에 반영한다. 자동 생성이 누락된 과거 서비스 날짜는 사용자가 수동 생성할 수 있다.
 - Retrospective는 **선택 기간의 Diary + DailyChatSession 원문 + persona.md** 로 생성한다. 원본 Memo는 Diary에 흡수된 하루 맥락으로 사용하고, MemoSummary는 Diary 생성 시 보조 힌트로만 참고한다.
 - `persona.md`는 온보딩으로 시작하고, 이후 사용자 기록을 바탕으로 주기적으로 갱신된다.
 
