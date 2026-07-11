@@ -177,6 +177,50 @@ paths:
         "422":
           $ref: "#/components/responses/Error"
 
+  /api/onboarding/survey:
+    get:
+      tags: [onboarding]
+      summary: 내 온보딩 설문 응답 조회
+      description: 저장된 회고 스타일 설문 응답을 조회한다.
+      operationId: getMyOnboardingSurvey
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingSurveyResponse"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+    put:
+      tags: [onboarding]
+      summary: 내 온보딩 설문 응답 수정
+      description: 설문 응답을 전체 교체하고 Persona를 다시 생성한다.
+      operationId: updateMyOnboardingSurvey
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOnboardingSurveyRequest"
+      responses:
+        "200":
+          description: 수정 및 Persona 재생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OnboardingSurveyResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+
   /api/personas/me:
     get:
       tags: [personas]
@@ -890,6 +934,30 @@ components:
           format: int64
         onboardingCompleted:
           type: boolean
+
+    UpdateOnboardingSurveyRequest:
+      type: object
+      required: [answers]
+      properties:
+        answers:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items:
+            $ref: "#/components/schemas/OnboardingAnswer"
+
+    OnboardingSurveyResponse:
+      type: object
+      required: [answers, submittedAt]
+      properties:
+        answers:
+          type: array
+          items:
+            $ref: "#/components/schemas/OnboardingAnswer"
+        submittedAt:
+          type: string
+          format: date-time
+          description: 설문 최초 제출 시각.
 
     Persona:
       type: object
