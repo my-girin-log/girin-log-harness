@@ -239,10 +239,13 @@ GitHub 잔디처럼 "사용자가 그 날 Memo를 작성했는가"를 날짜 단
 
 ## Retrospective
 
-선택 기간의 Diary, DailyChatSession 전체 대화 원문, `persona.md`를 기반으로 생성한 완성형
-회고 글. 원본 Memo는 Diary에 흡수된 하루 맥락으로 사용하고, MemoSummary는 Diary 생성 시
-보조 힌트로만 참고한다. 원본 Memo와 MemoSummary는 Retrospective 생성의 기본 직접 입력으로
-다시 넣지 않는다. (2026-07-09 결정)
+선택 기간의 확정 Diary, DailyChatSession 전체 대화 원문, `persona.md`를 기반으로 생성한 완성형
+회고 글. 선택 기간에 현재 진행 중인 serviceDate가 포함되어 있고 아직 Diary가 없다면, 그 날짜는
+Diary 대신 당일 Memo 원본과 DailyChatSession 원문으로 만든 임시 DailyContext를 사용한다.
+이 DailyContext는 Retrospective 생성 시점의 스냅샷이며 저장되거나 정식 Diary를 대체하지 않는다.
+다음 06:00 KST에는 기존 자동 생성 흐름대로 확정 Diary가 생성된다. 원본 Memo는 Diary 또는
+DailyContext에 흡수된 하루 맥락으로 사용하고, MemoSummary는 Diary 생성 시 보조 힌트로만 참고한다.
+원본 Memo와 MemoSummary는 Retrospective 생성의 기본 직접 입력으로 다시 넣지 않는다. (2026-07-11 결정)
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
