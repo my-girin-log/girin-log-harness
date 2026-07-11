@@ -89,7 +89,7 @@
 ### 흐름
 
 1. 사용자는 시작 날짜와 종료 날짜를 선택한다.
-2. 시스템은 선택 기간의 Diary, DailyChatSession 전체 대화 원문, persona.md를 기반으로 Retrospective를 생성한다.
+2. 시스템은 선택 기간의 Diary 또는 DailyContext, DailyChatSession 전체 대화 원문, persona.md를 기반으로 Retrospective를 생성한다.
 3. 생성된 Retrospective는 Markdown으로 저장된다.
 4. 사용자는 생성된 Retrospective를 조회하고 Markdown을 복사하거나 다운로드한다.
 

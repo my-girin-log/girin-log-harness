@@ -628,9 +628,9 @@ paths:
           $ref: "#/components/responses/Error"
     post:
       tags: [retrospectives]
-      summary: 기간 내 Diary, DailyChatSession 원문, persona.md 기반 Retrospective 생성
+      summary: 기간 내 Diary 또는 DailyContext, DailyChatSession 원문, persona.md 기반 Retrospective 생성
       description: |
-        선택 기간(serviceDate)의 Diary, DailyChatSession 전체 대화 원문, persona.md를 입력으로 회고를 생성한다.
+        선택 기간(serviceDate)의 Diary 또는 DailyContext, DailyChatSession 전체 대화 원문, persona.md를 입력으로 회고를 생성한다.
         확정 Diary가 있는 날짜는 Diary를 사용한다.
         선택 기간에 현재 진행 중인 serviceDate가 포함되고 아직 Diary가 없다면,
         해당 날짜는 Diary 대신 당일 Memo 원본과 DailyChatSession 원문으로 임시 DailyContext를 만들어 사용한다.
