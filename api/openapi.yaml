@@ -43,7 +43,7 @@ tags:
   - name: retrospectives
     description: 기간 기반 회고 생성
   - name: streaks
-    description: 채팅 세션 종료 기반 스트릭(잔디)
+    description: Memo 작성 기반 스트릭(잔디)
 
 paths:
   /api/auth/github:
@@ -700,7 +700,7 @@ paths:
       summary: 오늘 스트릭 달성 여부 조회
       description: |
         현재 로그인 사용자의 "오늘(서비스 날짜, 06:00 KST 경계)" 스트릭 달성 여부를 조회한다.
-        스트릭은 해당 서비스 날짜에 종료된 DailyChatSession이 있으면 달성으로 기록된다.
+        스트릭은 해당 서비스 날짜에 내용 있는 Memo를 작성했으면 달성으로 기록된다.
         용도: 홈 화면, 잔디 위젯, 오늘 완료 표시. 미달성이면 completed=false, diaryId/generatedAt=null.
       operationId: getTodayStreak
       responses:
@@ -1283,15 +1283,15 @@ components:
           description: 오늘의 서비스 날짜(06:00 KST 경계).
         completed:
           type: boolean
-          description: 오늘 스트릭 달성(=해당 서비스 날짜에 종료된 DailyChatSession 존재) 여부.
+          description: 오늘 스트릭 달성(=해당 서비스 날짜에 내용 있는 Memo 작성) 여부.
         diaryId:
           type: ["integer", "null"]
           format: int64
-          description: 세션 종료 기준 스트릭에선 보통 null(향후 그날 Diary와 연결 시 채워질 수 있음).
+          description: Memo 작성 기준 스트릭에선 보통 null(향후 그날 Diary와 연결 시 채워질 수 있음).
         generatedAt:
           type: ["string", "null"]
           format: date-time
-          description: 달성 시각(채팅 세션 종료 시각), 미달성이면 null.
+          description: 달성 시각(Memo 작성 시각), 미달성이면 null.
 
     StreakDay:
       type: object
@@ -1302,11 +1302,11 @@ components:
           format: date
         completed:
           type: boolean
-          description: 해당 서비스 날짜에 종료된 DailyChatSession 존재 여부.
+          description: 해당 서비스 날짜에 내용 있는 Memo 작성 여부.
         diaryId:
           type: ["integer", "null"]
           format: int64
-          description: 세션 종료 기준 스트릭에선 보통 null.
+          description: Memo 작성 기준 스트릭에선 보통 null.
 
     StreakSummaryResponse:
       type: object
