@@ -957,7 +957,7 @@ components:
         submittedAt:
           type: string
           format: date-time
-          description: 설문 최초 제출 시각.
+          description: 설문을 제출하거나 마지막으로 수정한 시각.
 
     Persona:
       type: object
