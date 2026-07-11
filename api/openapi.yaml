@@ -899,10 +899,13 @@ components:
       type: object
       required: [answers]
       properties:
-        blogUrl:
-          type: ["string", "null"]
-          format: uri
-          description: 사용자의 기존 블로그 또는 회고 글 URL. 선택값.
+        blogUrls:
+          type: ["array", "null"]
+          maxItems: 5
+          items:
+            type: string
+            format: uri
+          description: 사용자의 기존 블로그 또는 회고 글 URL 목록. 선택값(최대 5개).
         rawText:
           type: ["string", "null"]
           description: 기존 회고 글 원문. 선택값.
