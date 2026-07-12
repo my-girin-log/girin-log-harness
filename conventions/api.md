@@ -136,11 +136,13 @@ GET /api/diaries?cursor=<opaque>&limit=20
 - MemoSummary 생성·Diary 자동 생성도 같은 동기 방식을 따른다.
 - 추후 LLM 지연이 사용자 경험을 해치면 그때 비동기(`202`+폴링)로 전환을 검토한다(기획안 13절: LLM 비용/호출 구조 분리와 연결).
 
-**Retrospective 생성 입력 (2026-07-09 결정)**
-- 입력은 **선택 기간의 확정 `Diary` + `DailyChatSession.conversation` + `persona.md`** 다. 기간 기준은 `serviceDate`.
-- 선택 기간에 현재 진행 중인 `serviceDate`가 포함되어 있고 아직 Diary가 없다면, 해당 날짜는 Diary 대신 당일 `Memo` 원본과 `DailyChatSession.conversation`으로 만든 임시 DailyContext를 사용한다.
+**Retrospective 생성 입력 (2026-07-12 결정)**
+- 입력은 **선택 기간에 존재하는 확정 `Diary` + 기간 내 `DailyChatSession.conversation` + `persona.md`** 다. 기간 기준은 `serviceDate`.
+- Diary와 기록이 없는 과거·현재·미래 날짜는 입력에서 건너뛴다. 요청한 시작·종료 날짜는 Retrospective의 기간 메타데이터로 그대로 유지하며, 누락 날짜를 채우는 placeholder나 DailyContext를 합성하지 않는다.
+- 선택 기간에 현재 진행 중인 `serviceDate`가 포함되어 있고 Diary가 없으며 내용 있는 당일 `Memo` 또는 `DailyChatSession`이 있다면, 해당 날짜는 Diary 대신 당일 Memo 원본과 DailyChatSession.conversation으로 만든 임시 DailyContext를 사용한다. 공백 Memo는 입력 존재 여부와 DailyContext 내용에서 제외한다.
 - 임시 DailyContext는 Retrospective 생성 시점의 스냅샷이며, 저장되거나 정식 Diary를 대체하지 않는다. 다음 06:00 KST에는 기존 자동 생성 흐름대로 확정 Diary가 생성된다.
-- 현재 진행 중인 serviceDate가 아닌 과거 날짜에 Diary가 없으면 생성 전 상태로 보고 회고 생성에서 거부한다.
+- 과거·미래 날짜에는 Diary가 없어도 DailyContext를 만들지 않는다. 해당 날짜에 DailyChatSession이 있으면 그 전체 대화 원문은 날짜별 Diary 유무와 관계없이 직접 입력에 포함한다.
+- 전체 기간에 Diary, DailyContext, DailyChatSession 중 하나도 없으면 `422`(`NO_RETROSPECTIVE_SOURCE`)로 거부한다. Diary만, 당일 내용 있는 Memo 기반 DailyContext만, DailyChatSession만 있는 경우는 모두 생성할 수 있다. persona.md와 공백 Memo는 최소 입력으로 세지 않는다.
 - `Diary`는 채팅하지 않은 Memo까지 포함한 하루 전체 맥락이고, `DailyChatSession.conversation`은 대화에서 깊어진 감정·이유·판단 기준을 보강하는 입력이다.
 - 원본 `Memo`는 Diary에 흡수된 하루 맥락으로 사용하고, `MemoSummary`는 Diary 생성 시 보조 힌트로만 참고한다. Retrospective 생성의 기본 직접 입력으로 원본 Memo와 MemoSummary를 다시 넣지 않는다.
 - `persona.md`가 없거나 오래돼도 **차단하지 않고 graceful**하게 생성한다(persona는 보강 신호이지 필수 차단 요소가 아니다).
