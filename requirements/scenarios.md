@@ -84,15 +84,16 @@
 - 종료 시 짧은 마무리 멘트를 제공해야 한다.
 - 종료 사유는 사용자 종료, 최대 질문 수 도달, AI 판단 종료를 구분할 수 있어야 한다.
 
-## 4. 06:00 KST Diary 자동 생성
+## 4. Diary 생성
 
 ### 흐름
 
 1. 매일 06:00 KST에 시스템이 전날 작업 공간을 정리한다.
-2. 전날 Memo 원본과 DailyChatSession들을 종합해 Diary를 생성한다. MemoSummary가 있으면 카테고리/압축 힌트로 참고한다.
-3. 하루에 여러 Memo와 DailyChatSession이 있어도 Diary는 날짜별 하나만 생성한다.
-4. 기존 데이터는 삭제하지 않고 보관한다.
-5. 이후 새로운 빈 Memo를 생성할 수 있는 상태가 된다.
+2. 전날 Memo 원본과 DailyChatSession들을 종합해 Diary를 자동 생성한다. MemoSummary가 있으면 카테고리/압축 힌트로 참고한다.
+3. 사용자는 현재 진행 중인 serviceDate를 포함해 미래가 아닌 날짜의 Diary 수동 생성을 요청할 수 있다.
+4. 하루에 여러 Memo와 DailyChatSession이 있어도 Diary는 날짜별 하나만 생성한다.
+5. 기존 데이터는 삭제하지 않고 보관한다.
+6. 이후 새로운 빈 Memo를 생성할 수 있는 상태가 된다.
 
 ### 인수 조건
 
@@ -102,7 +103,11 @@
 - MemoSummary는 Diary 생성의 보조 힌트이며, 원본 Memo를 대체하지 않는다.
 - Memo에만 남은 내용은 기록된 사실로 반영하고, DailyChatSession에서 확인된 감정·이유·판단 기준은 더 강한 회고 신호로 반영한다.
 - Diary는 사용자가 하루를 어떻게 보냈는지 요약하는 날짜별 정리본이다.
-- Diary 수동 생성은 MVP 범위가 아니다.
+- 수동 생성은 현재 진행 중인 serviceDate에도 허용한다.
+- 미래 날짜에는 수동 생성을 허용하지 않는다.
+- 현재 serviceDate에 이미 Diary가 있으면 최신 Memo와 DailyChatSession 기준으로 같은 날짜 Diary를 갱신해야 한다.
+- 닫힌 과거 serviceDate에 이미 Diary가 있으면 중복 생성하지 않고 기존 Diary를 반환해야 한다.
+- Memo와 DailyChatSession이 모두 없는 날짜는 수동 생성할 수 없어야 한다.
 - Diary가 아직 생성되지 않은 날짜는 생성 전 상태를 안내해야 한다.
 
 ## 5. Retrospective 생성

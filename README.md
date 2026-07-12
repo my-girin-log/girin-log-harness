@@ -207,7 +207,7 @@ flowchart LR
     MS --> S["MemoSummary 선택<br/>→ 세션 시작"]
     S --> Q["실록이 역질문<br/>(최대 10회)"]
     Q --> E["'끝내기'<br/>→ 세션 종료"]
-    M --> D["Diary 1개 자동 생성<br/>Memo 원본 + 대화<br/>MemoSummary는 보조 힌트"]
+    M --> D["Diary 1개 자동/수동 생성<br/>Memo 원본 + 대화<br/>MemoSummary는 보조 힌트"]
     E ==>|"06:00 KST"| D
     D --> R["기간 선택<br/>→ Diary/DailyContext + DailyChatSession 원문 + persona.md로 Retrospective 생성"]
     E --> R
@@ -219,7 +219,7 @@ flowchart LR
 - 이미 대화한 MemoSummary는 비활성화되며 재선택할 수 없다.
 - 전체 대화 원문은 별도 `ChatMessage` 없이 **DailyChatSession의 `conversation`** 에 저장한다.
 - 역질문은 **최대 10회**(프롬프트로 강제), '끝내기' 버튼/AI 판단으로 종료. 사용자가 중간에 끝낸 세션도 완전히 종료된 상태로 취급한다.
-- **06:00 KST**: Memo 원본과 DailyChatSession 원문으로 Diary 자동 생성 + 일일 작업 공간 초기화. MemoSummary는 있을 때만 카테고리/압축 힌트로 참고하며, 채팅하지 않은 Memo도 Diary에 반영한다.
+- **06:00 KST**: Memo 원본과 DailyChatSession 원문으로 Diary 자동 생성 + 일일 작업 공간 초기화. 현재 진행 중인 serviceDate를 포함해 미래가 아닌 날짜는 사용자가 Diary 수동 생성을 요청할 수 있다. 현재 serviceDate에 이미 Diary가 있으면 최신 입력 기준으로 같은 날짜 Diary를 갱신하고, 닫힌 과거 serviceDate에 이미 Diary가 있으면 기존 Diary를 반환한다. 미래 날짜는 수동 생성하지 않는다. MemoSummary는 있을 때만 카테고리/압축 힌트로 참고하며, 채팅하지 않은 Memo도 Diary에 반영한다.
 - Retrospective는 **선택 기간에 존재하는 Diary 또는 DailyContext + 기간 내 DailyChatSession 원문 + persona.md** 로 생성한다. 기록이 없는 과거·현재·미래 날짜는 건너뛰되 요청한 시작·종료 날짜는 유지한다. 현재 serviceDate에 Diary가 없고 내용 있는 Memo가 있을 때만 Memo 원본으로 임시 DailyContext를 만들며, DailyChatSession 원문은 DailyContext에 포함하지 않고 기간 단위 직접 입력으로 사용한다. 과거·미래 날짜에는 DailyContext를 만들지 않는다. 전체 기간에 Diary, DailyContext, DailyChatSession 중 하나도 없으면 `422`(`NO_RETROSPECTIVE_SOURCE`)로 거부한다. 원본 Memo는 Diary 또는 DailyContext에 흡수된 하루 맥락으로 사용하고, MemoSummary는 Diary 생성 시 보조 힌트로만 참고한다.
 - `persona.md`는 최신 설문의 Explicit Preferences, 링크·기존 글·확정 기록의 Observed Traits, 두 영역을 병합한 Effective Guidelines로 구성한다. 설문 수정과 기록 기반 갱신은 각자의 영역만 바꾸고 Effective Guidelines를 다시 계산한다.
 
