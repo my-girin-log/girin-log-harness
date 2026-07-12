@@ -1,7 +1,7 @@
-# notion-sync — openapi.yaml → Notion 자동 동기화
+# notion-sync — openapi.yaml → Notion 수동 동기화
 
-`api/openapi.yaml`(이 레포의 API 계약 SSOT)이 바뀌면 Notion **API 명세** 데이터베이스를
-**코드로(결정적, AI 미사용)** 자동 갱신한다. operationId를 키로 upsert한다.
+`api/openapi.yaml`(이 레포의 API 계약 SSOT)을 Notion **API 명세** 데이터베이스에
+**코드로(결정적, AI 미사용)** 수동 반영한다. operationId를 키로 upsert한다.
 
 ## 무엇이 동기화되나 (칼럼 소유권)
 
@@ -22,8 +22,8 @@
 4. **DB id 채우기**
    각 DB를 "전체 페이지로 열기" → URL의 `notion.so/<여기32자>?v=...` 부분이 database id.
    `config.json`의 `databaseByTag`의 `REPLACE_...`를 그 id로 교체.
-5. **토큰 등록 (커밋 금지!)**
-   GitHub repo → Settings → Secrets and variables → Actions → **New secret** → 이름 `NOTION_TOKEN`
+5. **토큰 준비 (커밋 금지!)**
+   로컬 실행 시 `NOTION_TOKEN` 환경변수로만 주입한다.
 
 ## 로컬 실행
 
@@ -41,13 +41,7 @@ NOTION_TOKEN=ntn_xxx npm run sync:dry
 NOTION_TOKEN=ntn_xxx npm run sync:apply
 ```
 
-> ⚠️ 토큰은 **절대 파일/커밋에 넣지 말 것.** 항상 환경변수(`NOTION_TOKEN=...`) 또는 GitHub Secret으로만 주입한다.
-
-## 자동 실행 (CI)
-
-`.github/workflows/notion-sync.yml`:
-- `api/openapi.yaml` 변경이 main에 머지되면 → 자동 `--apply`
-- Actions 탭에서 수동 실행(workflow_dispatch) 시 `apply` 입력으로 dry-run/실반영 선택
+> ⚠️ 토큰은 **절대 파일/커밋에 넣지 말 것.** 항상 환경변수(`NOTION_TOKEN=...`)로만 주입한다.
 
 ## 설정 (config.json)
 
