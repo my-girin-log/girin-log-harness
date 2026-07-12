@@ -19,6 +19,27 @@
 - 블로그 링크 분석에 실패해도 설문 응답만으로 기본 Persona를 생성할 수 있어야 한다.
 - 입력 일부가 없어도 Persona 생성 요청이 실패하지 않아야 한다. 단, 최소 입력 기준은 API 명세에서 확정한다.
 
+## 1-1. Persona 영역별 갱신
+
+### 흐름
+
+1. 사용자가 마이페이지에서 온보딩 설문을 수정하면 시스템은 최신 설문으로 Explicit Preferences만 전체 교체한다.
+2. 시스템은 기존 Observed Traits를 유지하고 두 영역으로 Effective Guidelines를 다시 계산한다.
+3. 기록 기반 주기적 작업은 Explicit Preferences를 유지하고 기존 Observed Traits에 새 확정 Diary와 `ENDED` DailyChatSession의 반복 경향을 병합한다.
+4. 시스템은 갱신된 두 영역으로 Effective Guidelines와 노출용 Persona 요약 필드를 다시 계산한다.
+
+### 인수 조건
+
+- 설문 수정만으로 블로그 링크·기존 글 원문·확정 사용자 기록에서 얻은 Observed Traits가 삭제되거나 초기화되지 않아야 한다.
+- 기록 기반 갱신만으로 Explicit Preferences가 변경되지 않아야 한다.
+- 기록 기반 갱신은 새 기록만으로 Observed Traits 전체를 교체하지 않고 기존 온보딩 원천의 관찰과 누적 경향을 보존·정제해야 한다.
+- 단발성 표현이나 사건을 Observed Traits로 확정하지 않고 원문 전체를 persona.md에 복사하지 않아야 한다.
+- 명시적 선호와 관찰된 경향이 충돌하면 두 원천을 모두 유지하고, Effective Guidelines는 최신 명시적 의사를 우선한 현실적인 적용 기준을 제공해야 한다.
+- Memo는 독립적인 학습 원천에서 제외하고 확정 원천에서 확인된 경향의 보조 근거로만 사용해야 한다. Memo만으로 새 Observed Traits를 만들거나 기존 경향을 변경해서는 안 된다.
+- 설문 수정과 기록 기반 갱신 모두 Effective Guidelines를 다시 계산해야 한다.
+- `lastRefreshedAt`은 기록 기반 Observed Traits 갱신 때만 변경해야 하며, 설문 수정 시각은 현재 `OnboardingSurvey.submittedAt`으로 추적해야 한다.
+- 공개 Persona 응답에 내부 `persona.md` 또는 영역별 내부 필드를 포함하지 않아야 한다.
+
 ## 2. Memo 작성과 MemoSummary 생성
 
 ### 흐름
@@ -89,7 +110,7 @@
 ### 흐름
 
 1. 사용자는 시작 날짜와 종료 날짜를 선택한다.
-2. 시스템은 선택 기간에 존재하는 Diary 또는 DailyContext, 기간 내 DailyChatSession 전체 대화 원문, persona.md를 기반으로 Retrospective를 생성한다.
+2. 시스템은 선택 기간에 존재하는 Diary 또는 DailyContext, 기간 내 DailyChatSession 전체 대화 원문과 최신 persona.md의 Effective Guidelines를 중심으로 Retrospective를 생성한다.
 3. 생성된 Retrospective는 Markdown으로 저장된다.
 4. 사용자는 생성된 Retrospective를 조회하고 Markdown을 복사하거나 다운로드한다.
 
@@ -101,6 +122,7 @@
 - 선택 기간에 현재 진행 중인 serviceDate가 포함되어 있고 Diary가 없으며 내용 있는 당일 Memo가 있다면, 그 날짜는 Diary 대신 당일 Memo 원본만으로 만든 임시 DailyContext를 사용한다.
 - 과거·미래 날짜에는 DailyContext나 placeholder를 만들지 않는다. 기간 내 DailyChatSession 원문은 해당 날짜의 Diary 유무와 관계없이 직접 입력에 포함한다.
 - 전체 기간에 Diary, DailyContext, DailyChatSession 중 하나는 있어야 한다. persona.md와 공백 Memo만 있는 요청은 `NO_RETROSPECTIVE_SOURCE`로 거부한다.
+- 원본 설문이나 Persona 학습 자료 전체를 Retrospective 생성에 직접 입력하지 않는다. persona.md가 없거나 오래돼도 생성을 차단하지 않는다.
 - Diary만 있거나 당일 내용 있는 Memo 기반 DailyContext만 있는 기간도 Retrospective를 생성할 수 있어야 한다. DailyChatSession 원문은 DailyContext에 포함하지 않고 기간 단위 직접 입력으로 사용한다.
 - 임시 DailyContext는 Retrospective 생성 시점의 스냅샷이며, 저장되거나 정식 Diary를 대체하지 않는다.
 - 다음 06:00 KST에는 기존 자동 생성 흐름대로 확정 Diary가 생성되어야 한다.
