@@ -218,10 +218,14 @@ followUpCount: 2
 Memo에만 남은 내용은 기록된 사실로 보존하고, DailyChatSession에서 확인된 감정, 이유,
 판단 기준은 더 강한 회고 신호로 반영한다.
 
-### 06:00 KST 동작
+### 생성 정책
 
 - 매일 06:00 KST에 전날 데이터를 기반으로 자동 생성한다.
-- 수동 생성은 MVP 범위가 아니다.
+- 사용자는 현재 진행 중인 serviceDate를 포함해 미래가 아닌 날짜의 Diary 수동 생성을 요청할 수 있다.
+- 수동 생성은 자동 생성과 같은 입력 정책을 사용한다.
+- 현재 serviceDate에 이미 Diary가 있으면 최신 Memo와 DailyChatSession 기준으로 같은 날짜 Diary를 갱신한다.
+- 닫힌 과거 serviceDate에 이미 Diary가 있으면 중복 생성하지 않고 기존 Diary를 반환한다.
+- 미래 날짜는 수동 생성할 수 없다.
 - 기존 Memo, MemoSummary, DailyChatSession은 삭제하지 않고 보관한다.
 - 06:00 KST 이후 작업 공간에서는 이전 Memo를 `ARCHIVED`로 취급한다.
 - 생성 대상 날짜에 Memo와 DailyChatSession이 모두 없으면 빈 Diary를 생성하지 않는다.

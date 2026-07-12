@@ -89,6 +89,7 @@
 - **역질문 최대 10회** — 9/10/11회 경계. 10회 도달 시 더 질문하지 않고 `endedReason=MAX_FOLLOWUP`으로 종료된다. **서버 정책 레벨**에서 막히는지 확인(프롬프트만 신뢰 금지).
 - **세션 종료 사유** — `USER_ENDED`/`MAX_FOLLOWUP`/`AI_DECIDED`가 올바른 상황에서 기록된다.
 - **Diary는 하루 1개** — 하루에 여러 Memo·여러 DailyChatSession이 있어도 06:00 KST 정리 결과 Diary는 날짜당 정확히 하나다.
+- **Diary 수동 생성** — 현재 진행 중인 serviceDate를 포함해 미래가 아닌 날짜만 수동 생성할 수 있다. 미래 날짜는 `DIARY_DATE_IN_FUTURE`, 입력 근거가 없으면 `NO_DIARY_SOURCE`로 거부된다. 현재 serviceDate에 이미 Diary가 있으면 최신 Memo와 ENDED DailyChatSession 기준으로 같은 날짜 Diary를 갱신하고, 닫힌 과거 serviceDate에 이미 Diary가 있으면 기존 Diary를 반환하고 중복 생성하지 않는다.
 - **채팅하지 않은 Memo 보존** — DailyChatSession이 없거나 특정 MemoSummary가 대화에 사용되지 않아도, 해당 서비스 날짜의 Memo 원본은 Diary 생성 입력에 포함된다.
 - **MemoSummary는 보조 힌트** — Diary 생성에서 MemoSummary는 원본 Memo를 대체하지 않고, 카테고리/압축 힌트로만 사용된다.
 - **Memo 상태 전이** — `DRAFT → SUMMARIZED`(요약 시), 06:00 KST 이후 `ARCHIVED`. 정의되지 않은 전이는 거부된다.

@@ -39,7 +39,7 @@ tags:
   - name: dailyChatSessions
     description: MemoSummary 기반 실록이 대화
   - name: diaries
-    description: 06:00 KST 자동 생성 Diary
+    description: 자동/수동 생성 Diary
   - name: retrospectives
     description: 기간 기반 회고 생성
   - name: streaks
@@ -597,6 +597,50 @@ paths:
           $ref: "#/components/responses/Error"
         "401":
           $ref: "#/components/responses/Error"
+    post:
+      tags: [diaries]
+      summary: Diary 수동 생성
+      description: |
+        현재 진행 중인 serviceDate를 포함해 미래가 아닌 날짜의 Diary를 수동으로 생성한다.
+        자동 생성과 같은 입력 정책을 사용하며, Memo 원본과 ENDED DailyChatSession을 근거로 하고 MemoSummary는 보조 힌트로만 참고한다.
+        현재 serviceDate에 이미 Diary가 있으면 최신 입력 기준으로 같은 날짜 Diary를 갱신한다.
+        닫힌 과거 serviceDate에 이미 Diary가 있으면 중복 생성하지 않고 기존 Diary를 반환한다.
+        미래 날짜는 생성할 수 없다.
+      operationId: createDiary
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDiaryRequest"
+      responses:
+        "200":
+          description: 기존 Diary 반환 또는 현재 serviceDate Diary 갱신 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Diary"
+        "201":
+          description: 생성 성공
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Diary"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
+          $ref: "#/components/responses/Error"
+        "422":
+          $ref: "#/components/responses/Error"
+        "429":
+          $ref: "#/components/responses/Error"
+        "502":
+          $ref: "#/components/responses/Error"
+        "503":
+          $ref: "#/components/responses/Error"
+        "504":
+          $ref: "#/components/responses/Error"
+
   /api/diaries/calendar:
     get:
       tags: [diaries]
@@ -1306,6 +1350,15 @@ components:
           items:
             type: string
             format: date
+
+    CreateDiaryRequest:
+      type: object
+      required: [date]
+      properties:
+        date:
+          type: string
+          format: date
+          description: 생성할 Diary의 serviceDate. 현재 진행 중인 serviceDate는 허용하고 미래 날짜는 허용하지 않는다.
 
     CreateRetrospectiveRequest:
       type: object

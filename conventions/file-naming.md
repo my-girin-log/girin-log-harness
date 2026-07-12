@@ -19,7 +19,7 @@
     memos.md                  # 원본 Memo 목록
     memo-summaries.md         # Memo 분할 + 카테고리별 MemoSummary
     daily-chat-sessions.md    # DailyChatSession과 전체 대화 원문(conversation)
-    diary.md                  # 06:00 KST 자동 생성 Diary
+    diary.md                  # 자동/수동 생성 Diary
   2025-06-06/
     ...
 /persona/
@@ -76,10 +76,11 @@ status: OPEN
 
 ### `diary.md`
 
-매일 06:00 KST에 전날의 Memo 원본과 DailyChatSession들을 종합해 자동 생성되는
-Diary다. MemoSummary는 있을 때만 카테고리/압축 힌트로 참고한다. 사용자가 날짜별로
-조회하는 요약이며, 채팅하지 않은 Memo도 하루 맥락으로 보존한다. Retrospective 생성에는
-기간 내 Diary, DailyChatSession 원문, `persona.md`를 사용한다.
+매일 06:00 KST에 전날의 Memo 원본과 DailyChatSession들을 종합해 자동 생성되며,
+현재 진행 중인 serviceDate를 포함해 미래가 아닌 날짜는 사용자가 수동 생성할 수도 있는 Diary다. MemoSummary는 있을 때만
+카테고리/압축 힌트로 참고한다. 사용자가 날짜별로 조회하는 요약이며, 채팅하지 않은 Memo도
+하루 맥락으로 보존한다. Retrospective 생성에는 기간 내 Diary, DailyChatSession 원문,
+`persona.md`를 사용한다.
 
 ### `/persona/persona.md`
 
