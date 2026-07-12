@@ -241,8 +241,9 @@ GitHub 잔디처럼 "사용자가 그 날 Memo를 작성했는가"를 날짜 단
 
 선택 기간에 존재하는 확정 Diary, DailyChatSession 전체 대화 원문, `persona.md`를 기반으로 생성한
 완성형 회고 글. Diary와 기록이 없는 과거·현재·미래 날짜는 입력에서 건너뛰되 요청한 `periodStart`와
-`periodEnd`는 유지한다. 현재 진행 중인 serviceDate에 Diary가 없고 내용 있는 Memo 또는
-DailyChatSession이 있으면 당일 Memo 원본과 DailyChatSession 원문으로 임시 DailyContext를 만든다.
+`periodEnd`는 유지한다. 현재 진행 중인 serviceDate에 Diary가 없고 내용 있는 Memo가 있으면
+당일 Memo 원본만으로 임시 DailyContext를 만든다. DailyChatSession 원문은 DailyContext에
+포함하지 않고 기간 단위 직접 입력으로 사용한다.
 과거·미래 날짜에는 DailyContext를 만들지 않는다. 이 DailyContext는 Retrospective 생성 시점의
 스냅샷이며 저장되거나 정식 Diary를 대체하지 않는다. 다음 06:00 KST에는 기존 자동 생성 흐름대로
 확정 Diary가 생성된다. 전체 기간에 Diary, DailyContext, DailyChatSession 중 하나는 있어야 하며,

@@ -96,15 +96,15 @@
 ### 인수 조건
 
 - Retrospective에는 제목, 도입, 주요 경험, 고민과 판단 기준, 배운 점, 다음에 다르게 해볼 점, 마무리가 포함되어야 한다.
-- Retrospective는 Diary로 하루 전체 맥락을 받고, DailyChatSession 원문으로 대화에서 깊어진 감정·이유·판단 기준을 보강한다.
+- Retrospective는 Diary 또는 Memo 기반 DailyContext로 하루 전체 맥락을 받고, DailyChatSession 원문으로 대화에서 깊어진 감정·이유·판단 기준을 보강한다.
 - Diary와 기록이 없는 과거·현재·미래 날짜는 건너뛰되, 사용자가 요청한 시작·종료 날짜는 Retrospective 기간으로 유지해야 한다.
-- 선택 기간에 현재 진행 중인 serviceDate가 포함되어 있고 Diary가 없으며 내용 있는 당일 Memo 또는 DailyChatSession이 있다면, 그 날짜는 Diary 대신 당일 Memo 원본과 DailyChatSession 원문으로 만든 임시 DailyContext를 사용한다.
+- 선택 기간에 현재 진행 중인 serviceDate가 포함되어 있고 Diary가 없으며 내용 있는 당일 Memo가 있다면, 그 날짜는 Diary 대신 당일 Memo 원본만으로 만든 임시 DailyContext를 사용한다.
 - 과거·미래 날짜에는 DailyContext나 placeholder를 만들지 않는다. 기간 내 DailyChatSession 원문은 해당 날짜의 Diary 유무와 관계없이 직접 입력에 포함한다.
 - 전체 기간에 Diary, DailyContext, DailyChatSession 중 하나는 있어야 한다. persona.md와 공백 Memo만 있는 요청은 `NO_RETROSPECTIVE_SOURCE`로 거부한다.
-- Diary만, 당일 내용 있는 Memo 기반 DailyContext만, DailyChatSession만 있는 기간도 Retrospective를 생성할 수 있어야 한다.
+- Diary만 있거나 당일 내용 있는 Memo 기반 DailyContext만 있는 기간도 Retrospective를 생성할 수 있어야 한다. DailyChatSession 원문은 DailyContext에 포함하지 않고 기간 단위 직접 입력으로 사용한다.
 - 임시 DailyContext는 Retrospective 생성 시점의 스냅샷이며, 저장되거나 정식 Diary를 대체하지 않는다.
 - 다음 06:00 KST에는 기존 자동 생성 흐름대로 확정 Diary가 생성되어야 한다.
-- 원본 Memo는 Diary에 흡수된 맥락으로 사용하고, MemoSummary는 Diary 생성 시 보조 힌트로만 참고한다. Retrospective 생성의 기본 직접 입력으로 원본 Memo와 MemoSummary를 다시 넣지 않는다.
+- 원본 Memo는 Diary 또는 DailyContext에 흡수된 맥락으로 사용하고, MemoSummary는 Diary 생성 시 보조 힌트로만 참고한다. Retrospective 생성의 기본 직접 입력으로 원본 Memo와 MemoSummary를 다시 넣지 않는다.
 - Markdown 복사/다운로드는 별도 서버 API 없이 FE 기능으로 처리한다.
 
 ## 6. EventLog 저장

@@ -22,7 +22,7 @@
 | 일일 대화 세션 | `DailyChatSession` | 엔티티 | `ChatLog`, `Session`(단독) |
 | 전체 대화 원문 | `conversation` (DailyChatSession 필드) | 필드 | MVP에서 별도 `ChatMessage`/`Chat` 엔티티로 분리하지 않는다 |
 | 다이어리 (날짜별 정리본) | `Diary` | 엔티티 | `Journal`, `DailyNote` |
-| 일일 맥락 스냅샷 | `DailyContext` | Retrospective 생성 내부 입력 | 엔티티/저장 스키마가 아니다. 현재 진행 중인 serviceDate에 Diary가 없고 내용 있는 Memo 또는 DailyChatSession이 있을 때만 당일 Memo 원본과 DailyChatSession 원문으로 임시 구성한다. 과거·미래 날짜에는 만들지 않는다 |
+| 일일 맥락 스냅샷 | `DailyContext` | Retrospective 생성 내부 입력 | 엔티티/저장 스키마가 아니다. 현재 진행 중인 serviceDate에 Diary가 없고 내용 있는 Memo가 있을 때만 당일 Memo 원본으로 임시 구성한다. DailyChatSession 원문은 포함하지 않는다. 과거·미래 날짜에는 만들지 않는다 |
 | 회고 (완성형 글) | `Retrospective` | 엔티티 | `Retro`, `Review`, `Reflection` |
 | 이벤트 로그 | `EventLog` | 엔티티 | `AnalyticsLog`, `TrackingLog` |
 | 펫 (성장/EXP/streak) | `Pet` | MVP 제외 도메인 | `Character`, `Mascot` |
@@ -44,6 +44,6 @@
 - `DailyChatSession`은 **하나의 `serviceDate`에만 속한다**(생성 시점 06:00 경계 기준). 서로 다른 날짜의 `MemoSummary`를 한 세션에 섞지 않는다.
 - "전체 대화를 저장한다" = `DailyChatSession`의 `conversation` 필드에 실록이 질문·사용자 답변·마무리 멘트를 순서가 드러나게 저장한다(별도 메시지 엔티티 없음).
 - "정리한다" = 전날 `Memo` 원본 + `DailyChatSession` 전체 대화 원문 → `Diary` 변환(06:00 KST 자동). `MemoSummary`는 있을 때만 카테고리/압축 힌트로 참고한다. 채팅하지 않은 Memo도 Diary에 반영한다.
-- "회고를 생성한다" = 선택 기간에 존재하는 확정 `Diary` + 기간 내 `DailyChatSession` 전체 대화 원문 + `persona.md`로 `Retrospective` 생성. 기록이 없는 과거·현재·미래 날짜는 건너뛰되 요청 기간은 유지한다. 현재 진행 중인 `serviceDate`에 Diary가 없고 내용 있는 `Memo` 또는 `DailyChatSession`이 있으면 해당 날짜는 저장하지 않는 임시 `DailyContext`를 사용한다. 과거·미래 날짜에는 DailyContext를 만들지 않는다. 전체 기간에 Diary, DailyContext, DailyChatSession 중 하나는 있어야 한다. 원본 `Memo`는 Diary 또는 DailyContext에 흡수된 하루 맥락으로 사용하고, `MemoSummary`는 Diary 생성 시 보조 힌트로만 참고한다.
+- "회고를 생성한다" = 선택 기간에 존재하는 확정 `Diary` 또는 Memo 기반 `DailyContext` + 기간 내 `DailyChatSession` 전체 대화 원문 + `persona.md`로 `Retrospective` 생성. 기록이 없는 과거·현재·미래 날짜는 건너뛰되 요청 기간은 유지한다. 현재 진행 중인 `serviceDate`에 Diary가 없고 내용 있는 `Memo`가 있으면 해당 날짜는 Memo 원본만으로 저장하지 않는 임시 `DailyContext`를 사용한다. DailyChatSession 원문은 DailyContext에 포함하지 않고 기간 단위 직접 입력으로 사용한다. 과거·미래 날짜에는 DailyContext를 만들지 않는다. 전체 기간에 Diary, DailyContext, DailyChatSession 중 하나는 있어야 한다. 원본 `Memo`는 Diary 또는 DailyContext에 흡수된 하루 맥락으로 사용하고, `MemoSummary`는 Diary 생성 시 보조 힌트로만 참고한다.
 - 일자 경계는 항상 **06:00 KST**. "오늘"의 정의가 자정이 아님에 주의(`conventions/api.md`).
 - Markdown 복사/다운로드는 별도 서버 API가 아니라 FE 기능이다.
