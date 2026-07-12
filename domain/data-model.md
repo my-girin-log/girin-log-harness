@@ -49,30 +49,60 @@ Persona 생성을 위한 원천 입력. 블로그 링크, 기존 글 원문, 설
 
 ## Persona
 
-사용자의 말투, 사고 흐름, 관심사, 정리 습관, 회고 기준을 요약한 정보.
-Retrospective 생성 시 "사용자다움"의 근거가 된다. 회고 생성에는 사용자 기록을 바탕으로
-주기적으로 갱신되는 `persona.md` 표현을 사용한다.
+사용자의 말투, 사고 흐름, 관심사, 정리 습관, 회고 기준을 요약한 사용자당 하나의 정보다.
+사용자에게 노출하는 요약 필드와 Retrospective 및 실록이 대화에 사용하는 내부 `persona.md`를
+분리한다. 내부 문서는 `Explicit Preferences`, `Observed Traits`, `Effective Guidelines` 세 영역을
+독립적으로 유지한다.
 
-블로그 링크 분석 결과, 기존 글 원문, 온보딩 설문 응답을 함께 사용하되 일부 입력만 있어도
-Persona를 생성할 수 있어야 한다. 초기 Persona는 온보딩 기반으로 만들고, 이후 기록이
-쌓이면 사용자 맞춤 기준이 변할 수 있도록 내부 작업으로 갱신한다. 갱신 주기는 매일로
-고정하지 않는다.
+- `Explicit Preferences`: 최신 OnboardingSurvey를 사실 그대로 구조화한다. 설문 수정 시 이 영역만 전체 교체한다.
+- `Observed Traits`: 온보딩 링크 분석 결과, 기존 글 원문, 확정 Diary, `ENDED` DailyChatSession의 전체 `conversation`에서 반복 확인된 경향만 요약한다. 설문 수정으로 삭제하거나 초기화하지 않는다. 단발성 표현·사건을 성향으로 단정하거나 원문 전체를 복사하지 않는다.
+- `Effective Guidelines`: 앞의 두 영역을 병합한 실제 생성 지침이다. 어느 입력 영역도 삭제하지 않고 매 갱신 시 재산출하며, 충돌 시 최신 Explicit Preferences를 우선하되 관찰된 차이를 함께 보존한다.
+
+Memo는 미완성·즉흥 기록이므로 독립적인 학습 원천에서 제외한다. 확정 원천에서 이미 확인된
+경향의 반복 여부를 보조하는 근거로만 사용할 수 있으며, Memo만으로 새 Observed Traits를 만들거나
+기존 경향을 변경하지 않는다.
 
 | 필드 | 설명 | 비고 |
 | --- | --- | --- |
 | `id` | 식별자 | |
 | `userId` | 소유자 | |
-| `tone` | 말투 특징 | |
-| `thinkingStyle` | 사고 흐름 | |
-| `recurringInterests` | 반복 관심사 | |
-| `organizingHabit` | 글 정리 습관 | |
-| `retrospectionCriteria` | 회고 기준 | |
-| `preferredStructure` | 선호 글 구조 | |
-| `summary` | 회고 생성용 요약 Persona | |
-| `markdown` | `persona.md` 표현 | Retrospective 생성 입력 |
-| `lastRefreshedAt` | 마지막 갱신 시각 | 주기적 갱신 기준 |
+| `tone` | 노출용 말투 특징 | Effective Guidelines의 말투 지침을 투영 |
+| `thinkingStyle` | 노출용 사고 흐름 | Effective Guidelines의 사고·설명 방식 지침을 투영 |
+| `recurringInterests` | 노출용 반복 관심사 | Observed Traits의 반복 관심사와 Explicit Preferences에 직접 명시된 관심사를 함께 투영 |
+| `organizingHabit` | 노출용 글 정리 습관 | Effective Guidelines의 구성·정리 지침을 투영 |
+| `retrospectionCriteria` | 노출용 회고 기준 | Effective Guidelines의 회고 판단 기준을 투영 |
+| `preferredStructure` | 노출용 선호 글 구조 | 최신 Explicit Preferences를 우선한 Effective Guidelines의 출력 구조를 투영 |
+| `summary` | 노출용 Persona 요약 | Effective Guidelines를 축약한 사용자 조회용 요약이며 Retrospective의 주 입력은 아님 |
+| `markdown` | 내부 `persona.md` 표현 | 세 영역을 모두 담고 Effective Guidelines를 Retrospective·실록이 대화의 중심 입력으로 사용. 공개 Persona 응답에는 포함하지 않음 |
+| `lastRefreshedAt` | 사용자 기록 기반 마지막 갱신 시각 | Diary/DailyChatSession으로 Observed Traits를 갱신한 시각. 설문 시각은 `OnboardingSurvey.submittedAt` 사용 |
 | `createdAt` | 생성 시각 | |
 | `updatedAt` | 수정 시각 | |
+
+### 갱신 책임
+
+| 계기 | Explicit Preferences | Observed Traits | Effective Guidelines |
+| --- | --- | --- | --- |
+| 최초 온보딩 | 최신 설문으로 생성 | 링크 분석 결과·기존 글 원문으로 생성 | 두 영역으로 산출 |
+| 설문 수정/온보딩 재제출 | 최신 설문으로 전체 교체 | 기존 값 유지 | 다시 산출 |
+| 기록 기반 주기적 갱신 | 기존 값 유지 | 온보딩 링크·원문 기반 기존 경향을 보존하고, 기존 값과 확정 Diary·ENDED DailyChatSession을 함께 고려해 보강·정제 | 갱신된 두 원천 영역으로 다시 산출하며, 이 재산출 단계에서는 원천 영역을 추가 변경하지 않음 |
+
+기록 기반 갱신은 새 Diary·대화만으로 Observed Traits 전체를 교체하지 않는다. 기존 온보딩
+원천에서 얻은 관찰을 입력에서 누락했다는 이유만으로 삭제하지 않으며, 누적된 확정 근거가
+기존 요약을 더 이상 지지하지 않을 때만 해당 경향을 정제한다. 원천 이력 자체는 유지한다.
+이는 기존 Observed Traits에 새 확정 근거를 병합하는 점진 갱신 정책이며, 전체 원천을 매번
+재분석하는 정책은 아니다. 어떤 갱신 계기든 Effective Guidelines를 다시 산출한 뒤 `tone`부터
+`summary`까지의 노출용 필드도 위 매핑에 따라 함께 재산출한다. 노출용 필드는 원천 영역이
+아니므로 다음 갱신의 학습 입력으로 사용하지 않는다.
+
+`updatedAt`은 Persona 행 또는 내부 문서가 변경된 일반 수정 시각이고, `lastRefreshedAt`은 기록
+기반 Observed Traits 갱신 시각이다. 현재 스키마에서는 설문 제출·수정 시각을
+`OnboardingSurvey.submittedAt`으로 추적한다. Persona에 별도 `preferencesUpdatedAt`은 추가하지 않는다.
+
+내부 `persona.md`는 공개 Persona 응답에 포함하지 않는다. OpenAPI `Persona` 스키마에서도
+`markdown`을 제거하며 새 내부 영역별 필드를 추가하지 않는다.
+
+원천 이력은 소유 사용자 경계에서만 조회·학습에 사용하고 계정 생명주기 동안 보존한다.
+계정 삭제 시 해당 사용자의 `OnboardingSurvey`와 `PersonaSource`도 함께 삭제한다.
 
 ## Memo
 

@@ -9,6 +9,9 @@
 | 크루 (사용자) | `User` | 엔티티 | `Member`, `Crew`(엔티티명으론 X) |
 | 페르소나 | `Persona` | 엔티티/필드 | `Profile`, `Style` |
 | 페르소나 원천 입력 | `PersonaSource` | 엔티티 | `PersonaInput`, `Source`(단독) |
+| 사용자가 직접 설정한 기준 | `Explicit Preferences` | 내부 `persona.md` 영역 | `Declared Traits`, `Survey Persona` |
+| 기록에서 관찰된 경향 | `Observed Traits` | 내부 `persona.md` 영역 | `Inferred Persona`, `Learned Profile` |
+| 통합 적용 기준 | `Effective Guidelines` | 내부 `persona.md` 영역/생성 지침 | `Merged Persona`, `Final Traits` |
 | 온보딩 설문 | `OnboardingSurvey` | 엔티티/필드 | `PersonaSurvey`, `quiz`, `questionnaire` |
 | 메모 (작업 메모장) | `Memo` | 엔티티/필드 | `Note`, `Record`(혼용 금지) |
 | 메모 요약 | `MemoSummary` | 엔티티/필드 | `Summary`, `MemoCategory` |
@@ -45,5 +48,7 @@
 - "전체 대화를 저장한다" = `DailyChatSession`의 `conversation` 필드에 실록이 질문·사용자 답변·마무리 멘트를 순서가 드러나게 저장한다(별도 메시지 엔티티 없음).
 - "정리한다" = 전날 `Memo` 원본 + `DailyChatSession` 전체 대화 원문 → `Diary` 변환(06:00 KST 자동). `MemoSummary`는 있을 때만 카테고리/압축 힌트로 참고한다. 채팅하지 않은 Memo도 Diary에 반영한다.
 - "회고를 생성한다" = 선택 기간에 존재하는 확정 `Diary` 또는 Memo 기반 `DailyContext` + 기간 내 `DailyChatSession` 전체 대화 원문 + `persona.md`로 `Retrospective` 생성. 기록이 없는 과거·현재·미래 날짜는 건너뛰되 요청 기간은 유지한다. 현재 진행 중인 `serviceDate`에 Diary가 없고 내용 있는 `Memo`가 있으면 해당 날짜는 Memo 원본만으로 저장하지 않는 임시 `DailyContext`를 사용한다. DailyChatSession 원문은 DailyContext에 포함하지 않고 기간 단위 직접 입력으로 사용한다. 과거·미래 날짜에는 DailyContext를 만들지 않는다. 전체 기간에 Diary, DailyContext, DailyChatSession 중 하나는 있어야 한다. 원본 `Memo`는 Diary 또는 DailyContext에 흡수된 하루 맥락으로 사용하고, `MemoSummary`는 Diary 생성 시 보조 힌트로만 참고한다.
+- "Persona를 갱신한다" = 갱신 계기에 맞는 원천 영역만 바꾸고 `Effective Guidelines`를 다시 계산한다. 설문 수정은 `Explicit Preferences`만 교체하며 `Observed Traits`를 보존하고, 기록 기반 갱신은 그 반대로 처리한다.
+- `Explicit Preferences`에는 설문에서 직접 명시하지 않은 내용을 추측해 추가하지 않는다. `Observed Traits`에는 단발성 표현·사건이나 원문 전체를 넣지 않는다. `Effective Guidelines`는 두 원천 영역을 삭제하거나 덮어쓴 최종본이 아니라 재산출 가능한 파생 지침이다.
 - 일자 경계는 항상 **06:00 KST**. "오늘"의 정의가 자정이 아님에 주의(`conventions/api.md`).
 - Markdown 복사/다운로드는 별도 서버 API가 아니라 FE 기능이다.

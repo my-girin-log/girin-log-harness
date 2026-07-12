@@ -221,7 +221,7 @@ flowchart LR
 - 역질문은 **최대 10회**(프롬프트로 강제), '끝내기' 버튼/AI 판단으로 종료. 사용자가 중간에 끝낸 세션도 완전히 종료된 상태로 취급한다.
 - **06:00 KST**: Memo 원본과 DailyChatSession 원문으로 Diary 자동 생성 + 일일 작업 공간 초기화. MemoSummary는 있을 때만 카테고리/압축 힌트로 참고하며, 채팅하지 않은 Memo도 Diary에 반영한다.
 - Retrospective는 **선택 기간에 존재하는 Diary 또는 DailyContext + 기간 내 DailyChatSession 원문 + persona.md** 로 생성한다. 기록이 없는 과거·현재·미래 날짜는 건너뛰되 요청한 시작·종료 날짜는 유지한다. 현재 serviceDate에 Diary가 없고 내용 있는 Memo가 있을 때만 Memo 원본으로 임시 DailyContext를 만들며, DailyChatSession 원문은 DailyContext에 포함하지 않고 기간 단위 직접 입력으로 사용한다. 과거·미래 날짜에는 DailyContext를 만들지 않는다. 전체 기간에 Diary, DailyContext, DailyChatSession 중 하나도 없으면 `422`(`NO_RETROSPECTIVE_SOURCE`)로 거부한다. 원본 Memo는 Diary 또는 DailyContext에 흡수된 하루 맥락으로 사용하고, MemoSummary는 Diary 생성 시 보조 힌트로만 참고한다.
-- `persona.md`는 온보딩으로 시작하고, 이후 사용자 기록을 바탕으로 주기적으로 갱신된다.
+- `persona.md`는 최신 설문의 Explicit Preferences, 링크·기존 글·확정 기록의 Observed Traits, 두 영역을 병합한 Effective Guidelines로 구성한다. 설문 수정과 기록 기반 갱신은 각자의 영역만 바꾸고 Effective Guidelines를 다시 계산한다.
 
 ---
 

@@ -147,10 +147,17 @@ GET /api/diaries?cursor=<opaque>&limit=20
 - 원본 `Memo`는 Diary 또는 DailyContext에 흡수된 하루 맥락으로 사용하고, `MemoSummary`는 Diary 생성 시 보조 힌트로만 참고한다. Retrospective 생성의 기본 직접 입력으로 원본 Memo와 MemoSummary를 다시 넣지 않는다.
 - `persona.md`가 없거나 오래돼도 **차단하지 않고 graceful**하게 생성한다(persona는 보강 신호이지 필수 차단 요소가 아니다).
 
-**Persona 갱신 (2026-06-09 결정)**
-- Persona는 **온보딩으로 초기 생성**하고, 이후 사용자 기록을 바탕으로 `persona.md`를 주기적으로 갱신한다.
-- 갱신 주기는 매일로 고정하지 않는다. 비용과 품질을 보며 배치/내부 작업 기준으로 조정한다.
-- 회고 생성 시 `persona.md`가 없거나 오래돼도 **차단하지 않고 graceful**하게 생성한다. 노출용 Persona와 내부 `markdown`(persona.md)은 분리 유지한다.
+**Persona 구조와 갱신 (2026-07-13 결정)**
+- 내부 `persona.md`는 `Explicit Preferences`, `Observed Traits`, `Effective Guidelines` 세 영역으로 구성한다. 노출용 Persona와 내부 문서는 분리하며 공개 `Persona` 응답에서 `markdown`을 제거한다. 새 내부 영역별 필드도 공개 응답에 추가하지 않는다.
+- 최초 온보딩은 최신 설문 기반 Explicit Preferences와 링크 분석 결과·기존 글 원문 기반 Observed Traits를 만든 뒤 Effective Guidelines를 산출한다.
+- 설문 수정 또는 온보딩 재제출은 Explicit Preferences만 최신 설문으로 전체 교체한다. 기존 Observed Traits는 보존하고 Effective Guidelines를 다시 계산한다. 따라서 "Persona 갱신"은 설문만으로 Persona 전체를 재생성한다는 뜻이 아니다.
+- 사용자 기록 기반 주기적 갱신은 Explicit Preferences를 유지한다. 온보딩 링크·원문 기반 기존 Observed Traits를 초기화하지 않고 기존 값과 확정 Diary 및 `ENDED` DailyChatSession 전체 `conversation`을 함께 고려해 반복 경향을 보강·정제한 뒤 Effective Guidelines를 다시 계산한다. 새 기록만으로 Observed Traits 전체를 교체하지 않으며 갱신 주기는 매일로 고정하지 않는다.
+- Memo는 독립적인 학습 원천에서 제외하고, 확정 원천에서 이미 확인된 경향의 보조 근거로만 사용한다. Memo만으로 새 Observed Traits를 만들거나 기존 경향을 변경하지 않는다.
+- 명시적 선호와 관찰된 경향이 충돌하면 어느 쪽도 삭제하지 않는다. Effective Guidelines는 최신 명시적 의사를 우선하면서 관찰된 차이를 현실적인 적용 지침으로 보존한다.
+- Retrospective는 원본 설문·학습 자료 전체를 직접 입력하지 않고 최신 persona.md의 Effective Guidelines를 중심으로 사용한다. persona.md가 없거나 오래돼도 **차단하지 않고 graceful**하게 생성한다.
+- `lastRefreshedAt`은 사용자 기록 기반 Observed Traits 마지막 갱신 시각이다. 설문 반영 시각은 `OnboardingSurvey.submittedAt`으로 추적하며 별도 `preferencesUpdatedAt`은 추가하지 않는다.
+- Persona 원천은 소유 사용자 경계 안에서만 처리하며 원문 전체를 내부 문서나 Retrospective 입력으로 복제하지 않는다. `OnboardingSurvey`와 `PersonaSource`는 계정 생명주기 동안 보존하고 계정 삭제 시 함께 삭제한다.
+- 블로그 URL은 최초 요청과 매 redirect 대상 모두 `http`/`https`만 허용한다. 매 요청에서 DNS를 다시 해석해 검증된 IP로 연결하고 실제 socket peer IP까지 확인하여 DNS rebinding·TOCTOU를 막는다. loopback·link-local·private·metadata 주소를 차단하고 timeout·redirect 횟수·응답 크기·content-type 상한을 서버 정책으로 강제한다.
 
 ## 7-1. Diary 달력 조회 (2026-06-09 결정)
 
@@ -161,7 +168,7 @@ GET /api/diaries?cursor=<opaque>&limit=20
 
 **온보딩 재제출**
 - 이미 온보딩한 사용자가 `POST /api/onboarding/submissions`를 다시 보내도 **허용**한다(차단하지 않는다 — `409`/`403` 아님).
-- Persona는 **사용자당 1개**를 **덮어쓰기(갱신)**한다. 별도 버전을 만들지 않는다.
+- Persona는 **사용자당 1개**를 유지한다. 재제출은 Explicit Preferences를 교체하고 Effective Guidelines를 다시 계산하되 기존 Observed Traits를 보존하며, 별도 Persona 버전을 만들지 않는다.
 - `OnboardingSurvey`·`PersonaSource`는 원천 이력으로 **누적 저장**한다. `onboardingCompleted`는 true로 유지된다.
 
 **EventLog 기록 주체**
