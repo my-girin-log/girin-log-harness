@@ -57,9 +57,11 @@
 - `DRAFT` Memo만 수정/삭제할 수 있어야 한다.
 - `SUMMARIZED` 또는 `ARCHIVED` Memo를 수정/삭제하려 하면 거부해야 한다.
 - 삭제된 Memo는 조회, MemoSummary 생성, Diary 생성 입력에서 제외되어야 한다.
-- 하나의 기록은 여러 MemoSummary에 반영될 수 있다.
-- 여러 기록은 하나의 MemoSummary로 통합될 수 있다.
+- 한 번의 요약 실행 안에서는 하나의 기록이 여러 MemoSummary에 반영될 수 있고, 여러 기록 또는 내용 단위가 하나의 MemoSummary로 그룹핑될 수 있다.
+- 새로운 요약 실행은 현재 `DRAFT` Memo만으로 새 id를 가진 MemoSummary를 생성해야 하며, 이전 실행의 MemoSummary를 수정하거나 새 내용을 흡수해서는 안 된다.
+- 같은 `categoryName`이 여러 실행에 걸쳐 나오더라도 서로 다른 MemoSummary로 분리하고, 이전 `items`와 `chatAvailable` 상태를 그대로 유지해야 한다.
 - 이미 대화에 사용된 MemoSummary는 비활성화 상태로 표시되어야 한다.
+- `chatAvailable=false`인 MemoSummary는 이후 요약 실행에서도 변경되어서는 안 된다.
 - 비활성화된 MemoSummary는 재선택할 수 없어야 한다.
 - MVP에서 MemoSummary는 조회만 가능하며 수정/삭제하지 않는다.
 
