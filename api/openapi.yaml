@@ -742,6 +742,9 @@ paths:
         원본 Memo는 Diary 또는 DailyContext에 흡수된 하루 맥락으로 사용하고, MemoSummary는 Diary 생성 시 카테고리/압축 힌트로만 참고한다.
         Retrospective 생성의 기본 직접 입력으로 원본 Memo와 MemoSummary를 다시 넣지 않는다.
         persona.md가 없거나 오래돼도 graceful하게 생성한다.
+        요청에 memoSummaryIds가 있으면 기간 전체 대신 선택한 카테고리(MemoSummary)의 Memo 원문과
+        그 카테고리로 진행한 DailyChatSession 대화만으로 생성한다(Diary는 사용하지 않는다).
+        선택한 카테고리에서 Memo 원문과 대화가 모두 없으면 422(code=NO_RETROSPECTIVE_SOURCE)를 반환한다.
       operationId: createRetrospective
       requestBody:
         required: true
@@ -774,6 +777,40 @@ paths:
         "504":
           $ref: "#/components/responses/Error"
         "500":
+          $ref: "#/components/responses/Error"
+
+  /api/retrospectives/categories:
+    get:
+      tags: [retrospectives]
+      summary: 기간 내 회고 대상 카테고리(MemoSummary) 목록 조회
+      description: |
+        선택 기간(startDate~endDate)에 존재하는 MemoSummary(카테고리)를 최신순으로 반환한다.
+        기간 회고 생성 시 포함할 카테고리를 고르는 데 사용한다. 전체 선택이 기본이며,
+        빼고 싶은 카테고리를 제외한 나머지 memoSummaryIds를 생성 요청에 담는다.
+      operationId: listRetrospectiveCategories
+      parameters:
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetrospectiveCategoryListResponse"
+        "400":
+          $ref: "#/components/responses/Error"
+        "401":
           $ref: "#/components/responses/Error"
 
   /api/retrospectives/{retrospectiveId}:
@@ -1372,6 +1409,38 @@ components:
         endDate:
           type: string
           format: date
+        memoSummaryIds:
+          type: ["array", "null"]
+          description: |
+            회고에 포함할 카테고리(MemoSummary) id 목록. 생략하거나 비우면 기간 전체를 대상으로 기존 방식(Diary/DailyContext + 대화)으로 생성한다.
+            값이 있으면 선택한 카테고리의 Memo 원문과 그 카테고리로 진행한 대화만으로 생성한다.
+          items:
+            type: integer
+            format: int64
+
+    RetrospectiveCategoryListResponse:
+      type: object
+      required: [categories]
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/RetrospectiveCategory"
+
+    RetrospectiveCategory:
+      type: object
+      required: [memoSummaryId, serviceDate, categoryName, summary]
+      properties:
+        memoSummaryId:
+          type: integer
+          format: int64
+        serviceDate:
+          type: string
+          format: date
+        categoryName:
+          type: string
+        summary:
+          type: string
 
     Retrospective:
       type: object
