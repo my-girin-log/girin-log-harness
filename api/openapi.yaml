@@ -744,7 +744,11 @@ paths:
         persona.md가 없거나 오래돼도 graceful하게 생성한다.
         요청에 memoSummaryIds가 있으면 기간 전체 대신 선택한 카테고리(MemoSummary)의 Memo 원문과
         그 카테고리로 진행한 DailyChatSession 대화만으로 생성한다(Diary는 사용하지 않는다).
-        선택한 카테고리에서 Memo 원문과 대화가 모두 없으면 422(code=NO_RETROSPECTIVE_SOURCE)를 반환한다.
+        세션의 카테고리가 모두 선택된 대화는 원문을 그대로 입력하고, 일부만 선택된 세션은 원문 대신
+        선택한 카테고리 관련 내용만 LLM으로 발췌해 입력한다. 발췌 기반이라 선택하지 않은 카테고리
+        내용의 완전 배제를 보장하지는 않는다. 선택된 카테고리가 없는 세션과, 발췌에 실패했거나
+        발췌 결과가 빈 세션은 제외한다.
+        선택한 카테고리에서 Memo 원문과 대화 입력(원문·발췌)이 모두 없으면 422(code=NO_RETROSPECTIVE_SOURCE)를 반환한다.
       operationId: createRetrospective
       requestBody:
         required: true
@@ -1414,6 +1418,7 @@ components:
           description: |
             회고에 포함할 카테고리(MemoSummary) id 목록. 생략하거나 비우면 기간 전체를 대상으로 기존 방식(Diary/DailyContext + 대화)으로 생성한다.
             값이 있으면 선택한 카테고리의 Memo 원문과 그 카테고리로 진행한 대화만으로 생성한다.
+            일부 카테고리만 선택된 세션은 대화 원문 대신 선택한 카테고리 관련 내용만 발췌해 입력한다.
           items:
             type: integer
             format: int64
