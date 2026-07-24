@@ -26,7 +26,7 @@
 | 전체 대화 원문 | `conversation` (DailyChatSession 필드) | 필드 | MVP에서 별도 `ChatMessage`/`Chat` 엔티티로 분리하지 않는다 |
 | 다이어리 (날짜별 정리본) | `Diary` | 엔티티 | `Journal`, `DailyNote` |
 | 일일 맥락 스냅샷 | `DailyContext` | Retrospective 생성 내부 입력 | 엔티티/저장 스키마가 아니다. 현재 진행 중인 serviceDate에 Diary가 없고 내용 있는 Memo가 있을 때만 당일 Memo 원본으로 임시 구성한다. DailyChatSession 원문은 포함하지 않는다. 과거·미래 날짜에는 만들지 않는다 |
-| 미분류 메모 | `unclassified Memo` / `unclassifiedMemoCount` / `includeUnclassifiedMemos` | Retrospective 선택 생성 필드 | `uncategorized`, `orphan`(혼용 금지). 어떤 MemoSummary에도 속하지 않은(SUMMARIZED가 아닌) 내용 있는 Memo. 엔티티/상태가 아니라 조회 시점 분류다 |
+| 미분류 메모 | `unclassified Memo` / `unclassifiedMemoCount` / `includeUnclassifiedMemos` | Retrospective 선택 생성 필드 | `uncategorized`, `orphan`(혼용 금지). 어떤 MemoSummary에도 MemoSummaryItem으로 속하지 않은 내용 있는 Memo. MemoStatus가 아니라 소속으로 판정한다(요약 시 LLM이 누락한 Memo는 상태만 SUMMARIZED인 채 미분류다). 엔티티/상태가 아니라 조회 시점 분류다 |
 | 대화 발췌 | `ConversationExcerpt` / `dailyChatExcerpts` | Retrospective 생성 내부 입력 | `summary`, `digest`(혼용 금지). 일부 카테고리만 선택된 세션의 대화에서 선택 카테고리 관련 내용만 LLM으로 발췌한 것. 저장하지 않는다 |
 | 회고 (완성형 글) | `Retrospective` | 엔티티 | `Retro`, `Review`, `Reflection` |
 | 이벤트 로그 | `EventLog` | 엔티티 | `AnalyticsLog`, `TrackingLog` |
