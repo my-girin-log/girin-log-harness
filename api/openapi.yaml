@@ -742,14 +742,18 @@ paths:
         원본 Memo는 Diary 또는 DailyContext에 흡수된 하루 맥락으로 사용하고, MemoSummary는 Diary 생성 시 카테고리/압축 힌트로만 참고한다.
         Retrospective 생성의 기본 직접 입력으로 원본 Memo와 MemoSummary를 다시 넣지 않는다.
         persona.md가 없거나 오래돼도 graceful하게 생성한다.
-        요청에 memoSummaryIds가 있으면 기간 전체 대신 선택한 카테고리(MemoSummary)의 Memo 원문과
-        그 카테고리로 진행한 DailyChatSession 대화만으로 생성한다(Diary는 사용하지 않는다).
+        요청에 memoSummaryIds가 있거나 includeUnclassifiedMemos가 true면(선택 생성 모드) 기간 전체 대신
+        선택한 카테고리(MemoSummary)의 Memo 원문과 그 카테고리로 진행한 DailyChatSession 대화만으로
+        생성한다(Diary는 사용하지 않는다). includeUnclassifiedMemos가 true면 기간 내 미분류 Memo
+        (어떤 MemoSummary에도 속하지 않은 내용 있는 Memo)의 원문도 함께 입력한다. Diary는 미분류
+        Memo까지 흡수하므로, 선택 생성 모드에서 미분류를 빼면 그 내용이 회고에 들어가지 않는다.
         세션의 카테고리가 모두 선택된 대화는 원문을 그대로 입력하고, 일부만 선택된 세션은 원문 대신
         선택한 카테고리 관련 내용만 LLM으로 발췌해 입력한다. 발췌 기반이라 선택하지 않은 카테고리
         내용의 완전 배제를 보장하지는 않는다. 선택된 카테고리가 없는 세션과, 발췌가 성공했지만
         선택 카테고리 관련 내용이 없는 세션은 제외한다. 발췌 LLM 호출 실패는 생성 실패와 동일하게
         재시도 가능한 SILOK_LLM_* 오류(429/502/503)로 반환한다.
-        선택한 카테고리에서 Memo 원문과 대화 입력(원문·발췌)이 모두 없으면 422(code=NO_RETROSPECTIVE_SOURCE)를 반환한다.
+        선택한 카테고리의 Memo 원문, 대화 입력(원문·발췌), 미분류 Memo(포함 시)가 모두 없으면
+        422(code=NO_RETROSPECTIVE_SOURCE)를 반환한다.
       operationId: createRetrospective
       requestBody:
         required: true
@@ -792,6 +796,9 @@ paths:
         선택 기간(startDate~endDate)에 존재하는 MemoSummary(카테고리)를 최신순으로 반환한다.
         기간 회고 생성 시 포함할 카테고리를 고르는 데 사용한다. 전체 선택이 기본이며,
         빼고 싶은 카테고리를 제외한 나머지 memoSummaryIds를 생성 요청에 담는다.
+        기간 내 미분류 Memo(어떤 MemoSummary에도 속하지 않은 내용 있는 Memo) 개수를
+        unclassifiedMemoCount로 함께 반환한다. 0보다 크면 UI에 "미분류 메모" 항목을 노출해
+        포함 여부(includeUnclassifiedMemos)를 고를 수 있게 한다(QA #35).
       operationId: listRetrospectiveCategories
       parameters:
         - name: startDate
@@ -1417,21 +1424,34 @@ components:
         memoSummaryIds:
           type: ["array", "null"]
           description: |
-            회고에 포함할 카테고리(MemoSummary) id 목록. 생략하거나 비우면 기간 전체를 대상으로 기존 방식(Diary/DailyContext + 대화)으로 생성한다.
+            회고에 포함할 카테고리(MemoSummary) id 목록. includeUnclassifiedMemos가 true가 아니면서
+            생략하거나 비우면 기간 전체를 대상으로 기존 방식(Diary/DailyContext + 대화)으로 생성한다.
             값이 있으면 선택한 카테고리의 Memo 원문과 그 카테고리로 진행한 대화만으로 생성한다.
             일부 카테고리만 선택된 세션은 대화 원문 대신 선택한 카테고리 관련 내용만 발췌해 입력한다.
           items:
             type: integer
             format: int64
+        includeUnclassifiedMemos:
+          type: ["boolean", "null"]
+          description: |
+            true면 기간 내 미분류 Memo(어떤 MemoSummary에도 속하지 않은 내용 있는 Memo) 원문을
+            회고 입력에 포함한다(선택 생성 모드). memoSummaryIds 없이 true만 주면 미분류 Memo만으로
+            생성한다. 생략하거나 false면 미분류 Memo를 넣지 않는다(선택 생성 모드 기준).
 
     RetrospectiveCategoryListResponse:
       type: object
-      required: [categories]
+      required: [categories, unclassifiedMemoCount]
       properties:
         categories:
           type: array
           items:
             $ref: "#/components/schemas/RetrospectiveCategory"
+        unclassifiedMemoCount:
+          type: integer
+          description: |
+            기간 내 미분류 Memo(어떤 MemoSummary에도 속하지 않은 내용 있는 Memo) 개수.
+            0보다 크면 카테고리 선택 UI에 "미분류 메모" 항목을 함께 노출해, 사용자가
+            회고 포함 여부(includeUnclassifiedMemos)를 고를 수 있게 한다.
 
     RetrospectiveCategory:
       type: object
