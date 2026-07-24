@@ -296,6 +296,9 @@ MemoSummary는 Retrospective 생성의 기본 직접 입력으로 다시 넣지 
 | `content` | 생성된 Markdown | 복사/다운로드 대상 |
 | `createdAt` | 생성 시각 | |
 
+사용자는 자신이 소유한 Retrospective를 삭제할 수 있다. 삭제된 Retrospective와 연결된
+`sourceDailyChatSessionIds` 컬렉션은 함께 삭제하며, 원본 Diary와 DailyChatSession은 보존한다.
+
 ## EventLog
 
 MVP 검증 지표 수집을 위한 얇은 append-only 이벤트 로그.

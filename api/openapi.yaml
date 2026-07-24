@@ -848,6 +848,25 @@ paths:
           $ref: "#/components/responses/Error"
         "404":
           $ref: "#/components/responses/Error"
+    delete:
+      tags: [retrospectives]
+      summary: Retrospective 삭제
+      description: 현재 로그인 사용자가 소유한 Retrospective를 삭제한다.
+      operationId: deleteRetrospective
+      parameters:
+        - name: retrospectiveId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: 삭제 성공
+        "401":
+          $ref: "#/components/responses/Error"
+        "404":
+          $ref: "#/components/responses/Error"
 
   /api/streaks/me/today:
     get:
